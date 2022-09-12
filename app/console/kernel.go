@@ -2,10 +2,11 @@ package console
 
 import (
 	"flag"
-	"github.com/confetti-framework/framework/foundation/console"
-	"github.com/confetti-framework/framework/inter"
 	"src/app/console/commands"
 	"src/app/console/getters"
+
+	"github.com/confetti-framework/framework/foundation/console"
+	"github.com/confetti-framework/framework/inter"
 )
 
 // NewKernel ensures that the kernel receives all existing commands
@@ -16,7 +17,7 @@ func NewKernel(app inter.App) console.Kernel {
 
 		// Here you can add your own commands.
 		Commands: []inter.Command{
-			commands.ExampleCommand{},
+			commands.Watch{},
 		},
 
 		// This list includes custom flag.Getters, you can create custom

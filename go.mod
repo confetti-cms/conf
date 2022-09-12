@@ -26,6 +26,7 @@ require (
 	github.com/jedib0t/go-pretty/v6 v6.3.1 // indirect
 	github.com/joho/godotenv v1.4.0 // indirect
 	github.com/manifoldco/promptui v0.9.0 // indirect
+	github.com/matryer/is v1.4.0
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect
 	github.com/motemen/go-quickfix v0.0.0-20210528191040-5ef99de20668 // indirect
