@@ -74,6 +74,30 @@ func Test_file_with_capital_letter(t *testing.T) {
 	i.Equal("images/Logo.svg", changes[0].Path)
 }
 
+func Test_file_with_number(t *testing.T) {
+	// Given
+	dir := initTestGit("file_with_capital_letter")
+	touchFile(dir, "images/Logo2.svg")
+	// When
+	changes := services.ChangedFiles(dir)
+	// Then
+	i := is.New(t)
+	i.True(len(changes) == 1)
+	i.Equal("images/Logo2.svg", changes[0].Path)
+}
+
+func Test_file_with_special_caracters(t *testing.T) {
+	// Given
+	dir := initTestGit("file_with_capital_letter")
+	touchFile(dir, "images/Logo-_.svg")
+	// When
+	changes := services.ChangedFiles(dir)
+	// Then
+	i := is.New(t)
+	i.True(len(changes) == 1)
+	i.Equal("images/Logo-_.svg", changes[0].Path)
+}
+
 func Test_status_untracked(t *testing.T) {
 	// Given
 	dir := initTestGit("status_untracked")
@@ -98,8 +122,6 @@ func Test_status_added(t *testing.T) {
 	i.True(len(changes) == 1)
 	i.Equal(services.StatusAdded, changes[0].UnstagedStatus)
 }
-
-// @todo test all characters in filename
 
 func initTestGit(testDir string) string {
 	currentDir, err := os.Getwd()

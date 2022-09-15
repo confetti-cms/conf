@@ -9,6 +9,8 @@ import (
 
 type Status string
 
+const rPath = `(?P<path>[-_/0-9A-z.]+)`
+
 const (
 	None            Status = ""
 	StatusUntracked Status = "?"
@@ -35,7 +37,7 @@ func ChangedFiles(dir string) []FileChange {
 
 // https://git-scm.com/docs/git-status#_stash_information
 func getOrdinaryChanges(rawStatuses []string) []FileChange {
-	compiler := regexp.MustCompile(`^1\s(?P<X>[a.]).*\s(?P<path>[/A-z.]+)$`)
+	compiler := regexp.MustCompile(`^1\s(?P<X>[a.]).*\s` + rPath + `$`)
 
 	fileChanges := []FileChange{}
 	for _, status := range rawStatuses {
@@ -57,7 +59,7 @@ func getOrdinaryChanges(rawStatuses []string) []FileChange {
 
 // https://git-scm.com/docs/git-status#_stash_information
 func getUntrackedChanges(rawStatuses []string) []FileChange {
-	compiler := regexp.MustCompile(`^\?\s(?P<path>[/A-z.]+)$`)
+	compiler := regexp.MustCompile(`^\?\s` + rPath + `$`)
 
 	fileChanges := []FileChange{}
 	for _, status := range rawStatuses {
