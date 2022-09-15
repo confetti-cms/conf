@@ -5,6 +5,7 @@ go 1.18
 require (
 	github.com/confetti-framework/errors v0.12.0
 	github.com/confetti-framework/framework v0.29.4-beta
+	github.com/spf13/cast v1.4.1
 	golang.org/x/text v0.3.7
 )
 
@@ -33,7 +34,6 @@ require (
 	github.com/peterh/liner v1.2.2 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/schollz/progressbar/v3 v3.8.6 // indirect
-	github.com/spf13/cast v1.4.1 // indirect
 	github.com/tidwall/gjson v1.14.1 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect

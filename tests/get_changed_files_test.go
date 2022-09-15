@@ -64,7 +64,7 @@ func Test_new_path_with_file(t *testing.T) {
 
 func Test_file_with_capital_letter(t *testing.T) {
 	// Given
-	dir := initTestGit("new_path_with_file")
+	dir := initTestGit("file_with_capital_letter")
 	touchFile(dir, "images/Logo.svg")
 	// When
 	changes := services.ChangedFiles(dir)
@@ -76,15 +76,30 @@ func Test_file_with_capital_letter(t *testing.T) {
 
 func Test_status_untracked(t *testing.T) {
 	// Given
-	dir := initTestGit("new_path_with_file")
+	dir := initTestGit("status_untracked")
 	touchFile(dir, "Logo.svg")
 	// When
 	changes := services.ChangedFiles(dir)
 	// Then
 	i := is.New(t)
 	i.True(len(changes) == 1)
-	i.Equal(services.StatusUntracked, changes[0].Status)
+	i.Equal(services.StatusUntracked, changes[0].UnstagedStatus)
 }
+
+func Test_status_added(t *testing.T) {
+	// Given
+	dir := initTestGit("status_added")
+	touchFile(dir, "logo.svg")
+	gitAdd(dir, "logo.svg")
+	// When
+	changes := services.ChangedFiles(dir)
+	// Then
+	i := is.New(t)
+	i.True(len(changes) == 1)
+	i.Equal(services.StatusAdded, changes[0].UnstagedStatus)
+}
+
+// @todo test all characters in filename
 
 func initTestGit(testDir string) string {
 	currentDir, err := os.Getwd()
@@ -93,19 +108,26 @@ func initTestGit(testDir string) string {
 	}
 	dir := currentDir + "/" + mockDir + "/" + testDir
 	// Clean up directory from old test
-	if _, err := os.Stat(dir); !os.IsNotExist(err) {
+	_, err = os.Stat(dir)
+	if !os.IsNotExist(err) {
 		err := os.RemoveAll(dir)
 		if err != nil {
 			log.Fatal(err)
 		}
 	}
 	// Create directory
-	if err := os.Mkdir(dir, 0755); err != nil {
+	err = os.Mkdir(dir, 0755)
+	if err != nil {
 		log.Fatal(err)
 	}
 	// Create empty git repository
 	cmd := exec.Command("git", "init", dir)
-	if err := cmd.Run(); err != nil {
+	err = cmd.Run()
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = os.Chdir(dir)
+	if err != nil {
 		log.Fatal(err)
 	}
 	return dir
@@ -122,4 +144,12 @@ func touchFile(dir string, fileName string) {
 		log.Fatal(err)
 	}
 	defer file.Close()
+}
+
+func gitAdd(dir string, file string) {
+	// Add file or directory to the stage
+	_, err := services.GitAdd(filepath.Join(dir, file))
+	if err != nil {
+		log.Fatal(err)
+	}
 }

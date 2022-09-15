@@ -3,65 +3,92 @@ package services
 import (
 	"fmt"
 	"log"
-	"os/exec"
 	"regexp"
-
-	"github.com/spf13/cast"
+	"strings"
 )
 
 type Status string
 
 const (
+	None            Status = ""
 	StatusUntracked Status = "?"
+	StatusAdded     Status = "A"
 )
 
 type FileChange struct {
-	Path   string
-	Status Status
+	StagedStatus   Status
+	UnstagedStatus Status
+	Path           string
 }
 
 func ChangedFiles(dir string) []FileChange {
 	// Get all changes from git status in plain text
-	st := fmt.Sprintf("git -C %s status -s --porcelain --untracked-files=all", dir)
-	stdout, err := runCommand(st)
+	st := fmt.Sprintf("git -C %s status --porcelain=2 --untracked-files=all", dir)
+	raw, err := runCommand(st)
 	if err != nil {
 		log.Fatal(err)
 	}
-	// Get all changes in FileChange objects
-	compiler := regexp.MustCompile(`(?P<path>[/A-z.]+)`)
-	matches := parseByRegex(stdout, compiler)
+	rawStatuses := strings.Split(raw, "\n")
+
+	return append(getOrdinaryChanges(rawStatuses), getUntrackedChanges(rawStatuses)...)
+}
+
+// https://git-scm.com/docs/git-status#_stash_information
+func getOrdinaryChanges(rawStatuses []string) []FileChange {
+	compiler := regexp.MustCompile(`^1\s(?P<X>[a.]).*\s(?P<path>[/A-z.]+)$`)
+
 	fileChanges := []FileChange{}
-	for _, match := range matches {
+	for _, status := range rawStatuses {
+		match, found := parseByRegex(status, compiler)
+		if !found {
+			continue
+		}
 		fileChanges = append(fileChanges, FileChange{
-			Path:   match["path"],
-			Status: StatusUntracked,
+			// A character field contains the staged X value described, with unchanged indicated by a ".".
+			StagedStatus: Status(match["X"]),
+			// A character field contains the unstaged Y value described, with unchanged indicated by a ".".
+			UnstagedStatus: Status(""),
+			Path:           match["path"],
 		})
 	}
+
 	return fileChanges
 }
 
-func runCommand(command string) (string, error) {
-	out, err := exec.Command("/bin/sh", "-c", command).Output()
+// https://git-scm.com/docs/git-status#_stash_information
+func getUntrackedChanges(rawStatuses []string) []FileChange {
+	compiler := regexp.MustCompile(`^\?\s(?P<path>[/A-z.]+)$`)
 
-	return cast.ToString(out), err
-}
-
-func parseByRegex(content string, compiler *regexp.Regexp) []map[string]string {
-	matches := compiler.FindAllStringSubmatch(content, -1)
-	result := make([]map[string]string, 0)
-	names := subExpNames(compiler)
-	for _, match := range matches {
-		mapped := make(map[string]string)
-		for iNames, name := range names {
-			if len(match) <= iNames {
-				continue
-			}
-			mapped[name] = match[iNames+1]
+	fileChanges := []FileChange{}
+	for _, status := range rawStatuses {
+		match, found := parseByRegex(status, compiler)
+		if !found {
+			continue
 		}
-		result = append(result, mapped)
+		fileChanges = append(fileChanges, FileChange{
+			UnstagedStatus: StatusUntracked,
+			Path:           match["path"],
+		})
 	}
 
-	return result
+	return fileChanges
+}
+
+func parseByRegex(content string, compiler *regexp.Regexp) (map[string]string, bool) {
+	mapped := map[string]string{}
+	match := compiler.FindStringSubmatch(content)
+	// If none found, return false
+	if len(match) == 0 {
+		return mapped, false
+	}
+	names := subExpNames(compiler)
+	for iNames, name := range names {
+		if len(match) <= iNames {
+			continue
+		}
+		mapped[name] = match[iNames+1]
+	}
+	return mapped, true
 }
 
 func subExpNames(compiler *regexp.Regexp) []string {
