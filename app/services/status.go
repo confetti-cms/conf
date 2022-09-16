@@ -12,9 +12,11 @@ type Status string
 const rPath = `(?P<path>[-_/0-9A-z.]+)`
 
 const (
-	None            Status = ""
+	StatusUnchanged Status = "."
 	StatusUntracked Status = "?"
 	StatusAdded     Status = "A"
+	StatusModified  Status = "M"
+	StatusDeleted   Status = "D"
 )
 
 type FileChange struct {
@@ -26,18 +28,18 @@ type FileChange struct {
 func ChangedFiles(dir string) []FileChange {
 	// Get all changes from git status in plain text
 	st := fmt.Sprintf("git -C %s status --porcelain=2 --untracked-files=all", dir)
-	raw, err := runCommand(st)
+	raw, err := RunCommand(st)
 	if err != nil {
 		log.Fatal(err)
 	}
-	rawStatuses := strings.Split(raw, "\n")
+	rawStatuses := strings.Split(strings.Trim(raw, "\n"), "\n")
 
 	return append(getOrdinaryChanges(rawStatuses), getUntrackedChanges(rawStatuses)...)
 }
 
 // https://git-scm.com/docs/git-status#_stash_information
 func getOrdinaryChanges(rawStatuses []string) []FileChange {
-	compiler := regexp.MustCompile(`^1\s(?P<X>[a.]).*\s` + rPath + `$`)
+	compiler := regexp.MustCompile(`^1\s(?P<X>[AMD\.])(?P<Y>[MD\.]).*\s` + rPath + `$`)
 
 	fileChanges := []FileChange{}
 	for _, status := range rawStatuses {
@@ -49,7 +51,7 @@ func getOrdinaryChanges(rawStatuses []string) []FileChange {
 			// A character field contains the staged X value described, with unchanged indicated by a ".".
 			StagedStatus: Status(match["X"]),
 			// A character field contains the unstaged Y value described, with unchanged indicated by a ".".
-			UnstagedStatus: Status(""),
+			UnstagedStatus: Status(match["Y"]),
 			Path:           match["path"],
 		})
 	}
