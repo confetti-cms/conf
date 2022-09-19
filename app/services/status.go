@@ -5,6 +5,8 @@ import (
 	"log"
 	"regexp"
 	"strings"
+
+	"github.com/spf13/cast"
 )
 
 type Status string
@@ -26,6 +28,7 @@ type FileChange struct {
 	UnstagedStatus Status
 	Path           string
 	FromPath       string
+	Score          int
 }
 
 func ChangedFiles(dir string) []FileChange {
@@ -66,7 +69,7 @@ func getOrdinaryChanges(rawStatuses []string) []FileChange {
 
 // https://git-scm.com/docs/git-status#_stash_information
 func getRenameOrCopyChanges(rawStatuses []string) []FileChange {
-	compiler := regexp.MustCompile(`^2\s(?P<X>[R\.])(?P<Y>[R\.]).*\s` + rPath + `\s` + rFromPath + `$`)
+	compiler := regexp.MustCompile(`^2\s(?P<X>[R\.])(?P<Y>[R\.]).*\sR(?P<score>\d{1,3})\s` + rPath + `\s` + rFromPath + `$`)
 
 	fileChanges := []FileChange{}
 	for _, status := range rawStatuses {
@@ -81,6 +84,7 @@ func getRenameOrCopyChanges(rawStatuses []string) []FileChange {
 			UnstagedStatus: Status(match["Y"]),
 			FromPath:       match["from_path"],
 			Path:           match["path"],
+			Score:          cast.ToInt(match["score"]),
 		})
 	}
 

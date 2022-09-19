@@ -194,12 +194,12 @@ func Test_status_staged_renamed(t *testing.T) {
 	// Given
 	dir := initTestGit("status_staged_renamed")
 	touchFile(dir, "logo1.svg")
-	setFileContent(dir, "logo1.svg", `As you noticed, Git performs rename detection using a heuristic, rather than being told that a rename occurred. The git mv command, in fact, simply stages an add on the new file path and a remove of the old file path. Thus, rename detection is performed by comparing the contents of added files to the previously committed contents of deleted files.\nFirst, candidates are collected. Any new files are possible rename targets and any deleted files are possible rename sources. In addition, rewriting changes are broken such that a file that is more than 50 different than its previous revision is both a possible rename source and a possible rename target.\nNext, identical renames are detected. If you rename a file without making any changes, then the file will hash identically. These can be detected just performing comparisons of the hash in the index without reading the file contents, so removing these from the candidate list will reduce the number of comparisons you need to perform.`)
+	setFileContent(dir, "logo1.svg", `The content`)
 	gitAdd(dir, "logo1.svg")
 	gitCommit(dir, "logo1.svg")
 	deleteFile(dir, "logo1.svg")
 	touchFile(dir, "logo2.svg")
-	setFileContent(dir, "logo2.svg", `As you noticed, Git performs rename detection using a heuristic, rather than being told that a rename occurred. The git mv command, in fact, simply stages an add on the new file path and a remove of the old file path. Thus, rename detection is performed by comparing the contents of added files to the previously committed contents of deleted files.\nFirst, candidates are collected. Any new files are possible rename targets and any deleted files are possible rename sources. In addition, rewriting changes are broken such that a file that is more than 50 different than its previous revision is both a possible rename source and a possible rename target.\nNext, identical renames are detected. If you rename a file without making any changes, then the file will hash identically. These can be detected just performing comparisons of the hash in the index without reading the file contents, so removing these from the candidate list will reduce the number of comparisons you need to perform.`)
+	setFileContent(dir, "logo2.svg", `The content`)
 	gitAdd(dir, "logo1.svg") // Also add deleted file
 	gitAdd(dir, "logo2.svg")
 	// When
@@ -211,6 +211,31 @@ func Test_status_staged_renamed(t *testing.T) {
 	i.Equal("logo1.svg", changes[0].FromPath)
 	i.Equal(services.StatusUnchanged, changes[0].UnstagedStatus)
 	i.Equal(services.StatusRenamed, changes[0].StagedStatus)
+	i.Equal(100, changes[0].Score)
+}
+
+func Test_status_staged_renamed_with_rate(t *testing.T) {
+	// Given
+	dir := initTestGit("status_staged_renamed")
+	touchFile(dir, "logo1.svg")
+	setFileContent(dir, "logo1.svg", "The content\n1")
+	gitAdd(dir, "logo1.svg")
+	gitCommit(dir, "logo1.svg")
+	deleteFile(dir, "logo1.svg")
+	touchFile(dir, "logo2.svg")
+	setFileContent(dir, "logo2.svg", "The content\n2")
+	gitAdd(dir, "logo1.svg") // Also add deleted file
+	gitAdd(dir, "logo2.svg")
+	// When
+	changes := services.ChangedFiles(dir)
+	// Then
+	i := is.New(t)
+	i.True(len(changes) == 1)
+	i.Equal("logo2.svg", changes[0].Path)
+	i.Equal("logo1.svg", changes[0].FromPath)
+	i.Equal(services.StatusUnchanged, changes[0].UnstagedStatus)
+	i.Equal(services.StatusRenamed, changes[0].StagedStatus)
+	i.Equal(92, changes[0].Score)
 }
 
 func initTestGit(testDir string) string {
