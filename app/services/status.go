@@ -10,6 +10,7 @@ import (
 type Status string
 
 const rPath = `(?P<path>[-_/0-9A-z.]+)`
+const rFromPath = `(?P<from_path>[-_/0-9A-z.]+)`
 
 const (
 	StatusUnchanged Status = "."
@@ -17,12 +18,14 @@ const (
 	StatusAdded     Status = "A"
 	StatusModified  Status = "M"
 	StatusDeleted   Status = "D"
+	StatusRenamed   Status = "R"
 )
 
 type FileChange struct {
 	StagedStatus   Status
 	UnstagedStatus Status
 	Path           string
+	FromPath       string
 }
 
 func ChangedFiles(dir string) []FileChange {
@@ -33,8 +36,10 @@ func ChangedFiles(dir string) []FileChange {
 		log.Fatal(err)
 	}
 	rawStatuses := strings.Split(strings.Trim(raw, "\n"), "\n")
-
-	return append(getOrdinaryChanges(rawStatuses), getUntrackedChanges(rawStatuses)...)
+	changes := getOrdinaryChanges(rawStatuses)
+	changes = append(changes, getUntrackedChanges(rawStatuses)...)
+	changes = append(changes, getRenameOrCopyChanges(rawStatuses)...)
+	return changes
 }
 
 // https://git-scm.com/docs/git-status#_stash_information
@@ -52,6 +57,29 @@ func getOrdinaryChanges(rawStatuses []string) []FileChange {
 			StagedStatus: Status(match["X"]),
 			// A character field contains the unstaged Y value described, with unchanged indicated by a ".".
 			UnstagedStatus: Status(match["Y"]),
+			Path:           match["path"],
+		})
+	}
+
+	return fileChanges
+}
+
+// https://git-scm.com/docs/git-status#_stash_information
+func getRenameOrCopyChanges(rawStatuses []string) []FileChange {
+	compiler := regexp.MustCompile(`^2\s(?P<X>[R\.])(?P<Y>[R\.]).*\s` + rPath + `\s` + rFromPath + `$`)
+
+	fileChanges := []FileChange{}
+	for _, status := range rawStatuses {
+		match, found := parseByRegex(status, compiler)
+		if !found {
+			continue
+		}
+		fileChanges = append(fileChanges, FileChange{
+			// A character field contains the staged X value described, with unchanged indicated by a ".".
+			StagedStatus: Status(match["X"]),
+			// A character field contains the unstaged Y value described, with unchanged indicated by a ".".
+			UnstagedStatus: Status(match["Y"]),
+			FromPath:       match["from_path"],
 			Path:           match["path"],
 		})
 	}

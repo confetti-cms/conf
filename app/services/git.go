@@ -5,7 +5,7 @@ import (
 )
 
 func GitAdd(path string) (string, error) {
-	return RunCommand(fmt.Sprintf(`git add "%s"`, path))
+	return RunCommand(fmt.Sprintf(`git add -A "%s"`, path))
 }
 
 func GitCommit(path string) (string, error) {
