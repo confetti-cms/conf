@@ -31,7 +31,7 @@ type FileChange struct {
 	Score          int
 }
 
-func ChangedFiles(dir string) []FileChange {
+func ChangedFilesSinceLastCommit(dir string) []FileChange {
 	// Get all changes from git status in plain text
 	st := fmt.Sprintf("git -C %s status --porcelain=2 --untracked-files=all", dir)
 	raw, err := RunCommand(st)
