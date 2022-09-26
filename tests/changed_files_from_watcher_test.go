@@ -6,7 +6,9 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"runtime"
 	"src/app/services"
+	"strings"
 	"testing"
 
 	"github.com/matryer/is"
@@ -16,7 +18,7 @@ const mockDir = "mock_generated"
 
 func Test_no_changes(t *testing.T) {
 	// Given
-	dir := initTestGit("no_changes")
+	dir := initTestGit()
 	// When
 	changes := services.ChangedFilesSinceLastCommit(dir)
 	// Then
@@ -26,7 +28,7 @@ func Test_no_changes(t *testing.T) {
 
 func Test_one_new_file(t *testing.T) {
 	// Given
-	dir := initTestGit("one_new_file")
+	dir := initTestGit()
 	touchFile(dir, "logo.svg")
 	// When
 	changes := services.ChangedFilesSinceLastCommit(dir)
@@ -38,7 +40,7 @@ func Test_one_new_file(t *testing.T) {
 
 func Test_multiple_new_files(t *testing.T) {
 	// Given
-	dir := initTestGit("multiple_new_files")
+	dir := initTestGit()
 	touchFile(dir, "logo.png")
 	touchFile(dir, "logo.svg")
 	// When
@@ -52,7 +54,7 @@ func Test_multiple_new_files(t *testing.T) {
 
 func Test_new_path_with_file(t *testing.T) {
 	// Given
-	dir := initTestGit("new_path_with_file")
+	dir := initTestGit()
 	touchFile(dir, "images/logo.svg")
 	// When
 	changes := services.ChangedFilesSinceLastCommit(dir)
@@ -64,7 +66,7 @@ func Test_new_path_with_file(t *testing.T) {
 
 func Test_file_with_capital_letter(t *testing.T) {
 	// Given
-	dir := initTestGit("file_with_capital_letter")
+	dir := initTestGit()
 	touchFile(dir, "images/Logo.svg")
 	// When
 	changes := services.ChangedFilesSinceLastCommit(dir)
@@ -76,7 +78,7 @@ func Test_file_with_capital_letter(t *testing.T) {
 
 func Test_file_with_number(t *testing.T) {
 	// Given
-	dir := initTestGit("file_with_capital_letter")
+	dir := initTestGit()
 	touchFile(dir, "images/Logo2.svg")
 	// When
 	changes := services.ChangedFilesSinceLastCommit(dir)
@@ -88,7 +90,7 @@ func Test_file_with_number(t *testing.T) {
 
 func Test_file_with_special_caracters(t *testing.T) {
 	// Given
-	dir := initTestGit("file_with_capital_letter")
+	dir := initTestGit()
 	touchFile(dir, "images/Logo-_.svg")
 	// When
 	changes := services.ChangedFilesSinceLastCommit(dir)
@@ -100,19 +102,19 @@ func Test_file_with_special_caracters(t *testing.T) {
 
 func Test_status_untracked(t *testing.T) {
 	// Given
-	dir := initTestGit("status_untracked")
+	dir := initTestGit()
 	touchFile(dir, "Logo.svg")
 	// When
 	changes := services.ChangedFilesSinceLastCommit(dir)
 	// Then
 	i := is.New(t)
 	i.True(len(changes) == 1)
-	i.Equal(services.StatusUntracked, changes[0].UnstagedStatus)
+	i.Equal(services.GitStatusUntracked, changes[0].UnstagedStatus)
 }
 
 func Test_status_unstaged_modified(t *testing.T) {
 	// Given
-	dir := initTestGit("unstaged_modified")
+	dir := initTestGit()
 	touchFile(dir, "logo.svg")
 	gitAdd(dir, "logo.svg")
 	gitCommit(dir, "logo.svg")
@@ -122,12 +124,12 @@ func Test_status_unstaged_modified(t *testing.T) {
 	// Then
 	i := is.New(t)
 	i.True(len(changes) == 1)
-	i.Equal(services.StatusModified, changes[0].UnstagedStatus)
+	i.Equal(services.GitStatusModified, changes[0].UnstagedStatus)
 }
 
 func Test_status_unstaged_deleted(t *testing.T) {
 	// Given
-	dir := initTestGit("unstaged_deleted")
+	dir := initTestGit()
 	touchFile(dir, "logo.svg")
 	setFileContent(dir, "logo.svg", "Content")
 	gitAdd(dir, "logo.svg")
@@ -138,12 +140,12 @@ func Test_status_unstaged_deleted(t *testing.T) {
 	// Then
 	i := is.New(t)
 	i.True(len(changes) == 1)
-	i.Equal(services.StatusDeleted, changes[0].UnstagedStatus)
+	i.Equal(services.GitStatusDeleted, changes[0].UnstagedStatus)
 }
 
 func Test_status_staged_added(t *testing.T) {
 	// Given
-	dir := initTestGit("staged_added")
+	dir := initTestGit()
 	touchFile(dir, "logo.svg")
 	gitAdd(dir, "logo.svg")
 	// When
@@ -151,13 +153,13 @@ func Test_status_staged_added(t *testing.T) {
 	// Then
 	i := is.New(t)
 	i.True(len(changes) == 1)
-	i.Equal(services.StatusUnchanged, changes[0].UnstagedStatus)
-	i.Equal(services.StatusAdded, changes[0].StagedStatus)
+	i.Equal(services.GitStatusUnchanged, changes[0].UnstagedStatus)
+	i.Equal(services.GitStatusAdded, changes[0].StagedStatus)
 }
 
 func Test_status_staged_modified(t *testing.T) {
 	// Given
-	dir := initTestGit("staged_modified")
+	dir := initTestGit()
 	touchFile(dir, "logo.svg")
 	gitAdd(dir, "logo.svg")
 	gitCommit(dir, "logo.svg")
@@ -168,13 +170,13 @@ func Test_status_staged_modified(t *testing.T) {
 	// Then
 	i := is.New(t)
 	i.True(len(changes) == 1)
-	i.Equal(services.StatusUnchanged, changes[0].UnstagedStatus)
-	i.Equal(services.StatusModified, changes[0].StagedStatus)
+	i.Equal(services.GitStatusUnchanged, changes[0].UnstagedStatus)
+	i.Equal(services.GitStatusModified, changes[0].StagedStatus)
 }
 
 func Test_status_staged_deleted(t *testing.T) {
 	// Given
-	dir := initTestGit("staged_deleted")
+	dir := initTestGit()
 	touchFile(dir, "logo.svg")
 	setFileContent(dir, "logo.svg", "Content")
 	gitAdd(dir, "logo.svg")
@@ -186,13 +188,13 @@ func Test_status_staged_deleted(t *testing.T) {
 	// Then
 	i := is.New(t)
 	i.True(len(changes) == 1)
-	i.Equal(services.StatusUnchanged, changes[0].UnstagedStatus)
-	i.Equal(services.StatusDeleted, changes[0].StagedStatus)
+	i.Equal(services.GitStatusUnchanged, changes[0].UnstagedStatus)
+	i.Equal(services.GitStatusDeleted, changes[0].StagedStatus)
 }
 
 func Test_status_staged_renamed(t *testing.T) {
 	// Given
-	dir := initTestGit("status_staged_renamed")
+	dir := initTestGit()
 	touchFile(dir, "logo1.svg")
 	setFileContent(dir, "logo1.svg", `The content`)
 	gitAdd(dir, "logo1.svg")
@@ -209,14 +211,14 @@ func Test_status_staged_renamed(t *testing.T) {
 	i.True(len(changes) == 1)
 	i.Equal("logo2.svg", changes[0].Path)
 	i.Equal("logo1.svg", changes[0].FromPath)
-	i.Equal(services.StatusUnchanged, changes[0].UnstagedStatus)
-	i.Equal(services.StatusRenamed, changes[0].StagedStatus)
+	i.Equal(services.GitStatusUnchanged, changes[0].UnstagedStatus)
+	i.Equal(services.GitStatusRenamed, changes[0].StagedStatus)
 	i.Equal(100, changes[0].Score)
 }
 
 func Test_status_staged_renamed_with_rate(t *testing.T) {
 	// Given
-	dir := initTestGit("status_staged_renamed")
+	dir := initTestGit()
 	touchFile(dir, "logo1.svg")
 	setFileContent(dir, "logo1.svg", "The content\n1")
 	gitAdd(dir, "logo1.svg")
@@ -233,12 +235,14 @@ func Test_status_staged_renamed_with_rate(t *testing.T) {
 	i.True(len(changes) == 1)
 	i.Equal("logo2.svg", changes[0].Path)
 	i.Equal("logo1.svg", changes[0].FromPath)
-	i.Equal(services.StatusUnchanged, changes[0].UnstagedStatus)
-	i.Equal(services.StatusRenamed, changes[0].StagedStatus)
+	i.Equal(services.GitStatusUnchanged, changes[0].UnstagedStatus)
+	i.Equal(services.GitStatusRenamed, changes[0].StagedStatus)
 	i.Equal(92, changes[0].Score)
 }
 
-func initTestGit(testDir string) string {
+func initTestGit() string {
+	pc, _, _, _ := runtime.Caller(1)
+	testDir := strings.Split(runtime.FuncForPC(pc).Name(), ".")[1]
 	currentDir, err := os.Getwd()
 	if err != nil {
 		log.Println(err)

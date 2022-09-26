@@ -15,15 +15,15 @@ const rPath = `(?P<path>[-_/0-9A-z.]+)`
 const rFromPath = `(?P<from_path>[-_/0-9A-z.]+)`
 
 const (
-	StatusUnchanged Status = "."
-	StatusUntracked Status = "?"
-	StatusAdded     Status = "A"
-	StatusModified  Status = "M"
-	StatusDeleted   Status = "D"
-	StatusRenamed   Status = "R"
+	GitStatusUnchanged Status = "."
+	GitStatusUntracked Status = "?"
+	GitStatusAdded     Status = "A"
+	GitStatusModified  Status = "M"
+	GitStatusDeleted   Status = "D"
+	GitStatusRenamed   Status = "R"
 )
 
-type FileChange struct {
+type GitFileChange struct {
 	StagedStatus   Status
 	UnstagedStatus Status
 	Path           string
@@ -31,7 +31,7 @@ type FileChange struct {
 	Score          int
 }
 
-func ChangedFilesSinceLastCommit(dir string) []FileChange {
+func ChangedFilesSinceLastCommit(dir string) []GitFileChange {
 	// Get all changes from git status in plain text
 	st := fmt.Sprintf("git -C %s status --porcelain=2 --untracked-files=all", dir)
 	raw, err := RunCommand(st)
@@ -46,16 +46,16 @@ func ChangedFilesSinceLastCommit(dir string) []FileChange {
 }
 
 // https://git-scm.com/docs/git-status#_stash_information
-func getOrdinaryChanges(rawStatuses []string) []FileChange {
+func getOrdinaryChanges(rawStatuses []string) []GitFileChange {
 	compiler := regexp.MustCompile(`^1\s(?P<X>[AMD\.])(?P<Y>[MD\.]).*\s` + rPath + `$`)
 
-	fileChanges := []FileChange{}
+	fileChanges := []GitFileChange{}
 	for _, status := range rawStatuses {
 		match, found := parseByRegex(status, compiler)
 		if !found {
 			continue
 		}
-		fileChanges = append(fileChanges, FileChange{
+		fileChanges = append(fileChanges, GitFileChange{
 			// A character field contains the staged X value described, with unchanged indicated by a ".".
 			StagedStatus: Status(match["X"]),
 			// A character field contains the unstaged Y value described, with unchanged indicated by a ".".
@@ -68,16 +68,16 @@ func getOrdinaryChanges(rawStatuses []string) []FileChange {
 }
 
 // https://git-scm.com/docs/git-status#_stash_information
-func getRenameOrCopyChanges(rawStatuses []string) []FileChange {
+func getRenameOrCopyChanges(rawStatuses []string) []GitFileChange {
 	compiler := regexp.MustCompile(`^2\s(?P<X>[R\.])(?P<Y>[R\.]).*\sR(?P<score>\d{1,3})\s` + rPath + `\s` + rFromPath + `$`)
 
-	fileChanges := []FileChange{}
+	fileChanges := []GitFileChange{}
 	for _, status := range rawStatuses {
 		match, found := parseByRegex(status, compiler)
 		if !found {
 			continue
 		}
-		fileChanges = append(fileChanges, FileChange{
+		fileChanges = append(fileChanges, GitFileChange{
 			// A character field contains the staged X value described, with unchanged indicated by a ".".
 			StagedStatus: Status(match["X"]),
 			// A character field contains the unstaged Y value described, with unchanged indicated by a ".".
@@ -92,17 +92,17 @@ func getRenameOrCopyChanges(rawStatuses []string) []FileChange {
 }
 
 // https://git-scm.com/docs/git-status#_stash_information
-func getUntrackedChanges(rawStatuses []string) []FileChange {
+func getUntrackedChanges(rawStatuses []string) []GitFileChange {
 	compiler := regexp.MustCompile(`^\?\s` + rPath + `$`)
 
-	fileChanges := []FileChange{}
+	fileChanges := []GitFileChange{}
 	for _, status := range rawStatuses {
 		match, found := parseByRegex(status, compiler)
 		if !found {
 			continue
 		}
-		fileChanges = append(fileChanges, FileChange{
-			UnstagedStatus: StatusUntracked,
+		fileChanges = append(fileChanges, GitFileChange{
+			UnstagedStatus: GitStatusUntracked,
 			Path:           match["path"],
 		})
 	}
