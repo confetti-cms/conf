@@ -17,8 +17,7 @@ func Test_patch_unkown_file(t *testing.T) {
 	// Then
 	i := is.New(t)
 	i.Equal(patch, "")
-	i.Equal(true, strings.Contains(err.Error(), "unknown revision or path not in the working tree"))
-	i.Equal(false, strings.Contains(err.Error(), "\n"))
+	i.NoErr(err)
 }
 
 func Test_patch_line_changed(t *testing.T) {
