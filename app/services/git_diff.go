@@ -1,22 +1,23 @@
 package services
 
 import (
-	"errors"
 	"fmt"
-	"os/exec"
-
-	"github.com/spf13/cast"
+	"strings"
 )
 
-func GetPatchSinceCommit(commit, path string) (string, error) {
-	// Get all changes from git diff in patch format
-	st := fmt.Sprintf("git diff %s -- %s", commit, path)
-	println(st)
-	raw, err := RunCommand(st)
+func GetPatchSinceCommit(commit, root, path string) (string, error) {
+	// Get tracked changes from git diff in patch format
+	st := fmt.Sprintf("cd %s && git diff %s -- %s", root, commit, path)
+	out, err := RunCommand(st)
 	if err != nil {
-		if ee, ok := err.(*exec.ExitError); ok {
-			return "", errors.New(cast.ToString(ee.Stderr))
-		}
+		return "", err
 	}
-	return raw, err
+	// If no results; get untracked changes
+	if strings.Trim(out, "\n") != "" {
+		return out, err
+	}
+	st = fmt.Sprintf("cd %s && git diff -- /dev/null %s", root, path)
+	// Unknown way err is not nil
+	out, _ = RunCommand(st)
+	return out, nil
 }

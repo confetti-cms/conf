@@ -2,7 +2,6 @@ package commands
 
 import (
 	"log"
-	"path"
 	"src/app/services"
 
 	"github.com/confetti-framework/framework/inter"
@@ -21,15 +20,15 @@ func (t Watch) Description() string {
 }
 
 func (t Watch) Handle(c inter.Cli) inter.ExitCode {
-	dir := t.Directory
-	c.Info("Read directory: %s", dir)
+	root := t.Directory
+	c.Info("Read directory: %s", root)
 
-	remoteCommit := services.GitRemoteCommit(dir)
+	remoteCommit := services.GitRemoteCommit(root)
 
-	changes := services.ChangedFilesSinceLastCommit(dir)
+	changes := services.ChangedFilesSinceLastCommit(root)
 
 	for _, change := range changes {
-		patch, err := services.GetPatchSinceCommit(remoteCommit, path.Join(dir, change.Path))
+		patch, err := services.GetPatchSinceCommit(remoteCommit, root, change.Path)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -40,6 +39,7 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 		if err != nil {
 			log.Fatal(err)
 		}
+		println("Has send: " + change.Path)
 	}
 
 	return inter.Success
