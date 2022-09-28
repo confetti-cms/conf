@@ -8,9 +8,10 @@ import (
 	"github.com/spf13/cast"
 )
 
-func GetPatchSinceCommit(commit, file string) (string, error) {
+func GetPatchSinceCommit(commit, path string) (string, error) {
 	// Get all changes from git diff in patch format
-	st := fmt.Sprintf("git diff %s -- %s", commit, file)
+	st := fmt.Sprintf("git diff %s -- %s", commit, path)
+	println(st)
 	raw, err := RunCommand(st)
 	if err != nil {
 		if ee, ok := err.(*exec.ExitError); ok {
