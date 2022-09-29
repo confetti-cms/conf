@@ -2,8 +2,24 @@ package services
 
 import (
 	"fmt"
+	"log"
 	"strings"
 )
+
+func SendPatchSinceCommit(commit, root string, path string) {
+	patch, err := GetPatchSinceCommit(commit, root, path)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = SendPatch(PatchBody{
+		Path:  path,
+		Patch: patch,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	println("Has send: " + path)
+}
 
 func GetPatchSinceCommit(commit, root, path string) (string, error) {
 	// Get tracked changes from git diff in patch format

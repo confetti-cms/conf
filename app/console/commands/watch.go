@@ -3,8 +3,10 @@ package commands
 import (
 	"log"
 	"src/app/services"
+	"strings"
 
 	"github.com/confetti-framework/framework/inter"
+	"github.com/fsnotify/fsnotify"
 )
 
 type Watch struct {
@@ -27,20 +29,53 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 
 	changes := services.ChangedFilesSinceLastCommit(root)
 
+	// First send patch since latest remote commit
 	for _, change := range changes {
-		patch, err := services.GetPatchSinceCommit(remoteCommit, root, change.Path)
-		if err != nil {
-			log.Fatal(err)
-		}
-		err = services.SendPatch(services.PatchBody{
-			Path:  change.Path,
-			Patch: patch,
-		})
-		if err != nil {
-			log.Fatal(err)
-		}
-		println("Has send: " + change.Path)
+		services.SendPatchSinceCommit(remoteCommit, root, change.Path)
 	}
+
+	// Create new watcher.
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer watcher.Close()
+
+	// Start listening for events.
+	go func() {
+		for {
+			select {
+			case event, ok := <-watcher.Events:
+				if !ok {
+					log.Println("Not ok")
+					continue
+				}
+				if strings.HasSuffix(event.Name, "swp") || strings.HasSuffix(event.Name, "~") {
+					continue
+				}
+				if event.Op == fsnotify.Chmod || event.Op != fsnotify.Rename {
+					continue
+				}
+				log.Println("modified file:", event.Name)
+				path := strings.TrimLeft(event.Name, root)
+				services.SendPatchSinceCommit(remoteCommit, root, path)
+			case err, ok := <-watcher.Errors:
+				if !ok {
+					continue
+				}
+				log.Println("error:", err)
+			}
+		}
+	}()
+
+	// Watch the rood of the project.
+	err = watcher.Add(root)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Block main goroutine forever.
+	<-make(chan struct{})
 
 	return inter.Success
 }
