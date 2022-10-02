@@ -50,14 +50,18 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 					log.Println("Not ok")
 					continue
 				}
+				log.Println(event.Name)
 				if strings.HasSuffix(event.Name, "swp") || strings.HasSuffix(event.Name, "~") {
 					continue
 				}
-				if event.Op == fsnotify.Chmod || event.Op != fsnotify.Rename {
+				if event.Op == fsnotify.Chmod || event.Op == fsnotify.Rename {
+					log.Println("Ignore "+event.Op.String()+" by file:", event.Name)
 					continue
 				}
 				log.Println("modified file:", event.Name)
-				path := strings.TrimLeft(event.Name, root)
+				path := strings.ReplaceAll(event.Name, root+"/", "")
+				log.Println("root:", root)
+				log.Println("after trim left:", path)
 				services.SendPatchSinceCommit(remoteCommit, root, path)
 			case err, ok := <-watcher.Errors:
 				if !ok {

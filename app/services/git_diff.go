@@ -3,10 +3,15 @@ package services
 import (
 	"fmt"
 	"log"
+	"path/filepath"
 	"strings"
 )
 
 func SendPatchSinceCommit(commit, root string, path string) {
+	// Ignore hidden files and directories
+	if (strings.HasPrefix(path, ".") || strings.HasPrefix(filepath.Base(path), ".")) {
+		return
+	}
 	patch, err := GetPatchSinceCommit(commit, root, path)
 	if err != nil {
 		log.Fatal(err)
@@ -16,7 +21,8 @@ func SendPatchSinceCommit(commit, root string, path string) {
 		Patch: patch,
 	})
 	if err != nil {
-		log.Fatal(err)
+		log.Println("\nErr:")
+		log.Println(err)
 	}
 	println("Has send: " + path)
 }

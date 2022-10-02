@@ -5,22 +5,25 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/spf13/cast"
 )
 
 type PatchBody struct {
 	Path  string `json:"path"`
 	Patch string `json:"patch"`
+	Untracked bool `json:"is_untracked"`
 }
 
 func SendPatch(requestBody PatchBody) error {
 	url := "http://localhost:8000/api/source"
 	method := "PATCH"
-	println("Send patch for file: " + requestBody.Path)
-	file, err := json.Marshal(requestBody)
+	json, err := json.Marshal(requestBody)
 	if err != nil {
 		return err
 	}
-	payload := bytes.NewReader(file)
+	payload := bytes.NewReader(json)
+	println("Payload: " + cast.ToString(payload))
 
 	client := &http.Client{}
 	req, err := http.NewRequest(method, url, payload)
