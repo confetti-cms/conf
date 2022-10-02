@@ -2,6 +2,7 @@ package commands
 
 import (
 	"log"
+	"path"
 	"src/app/services"
 	"strings"
 
@@ -73,7 +74,12 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	}()
 
 	// Watch the rood of the project.
-	err = watcher.Add(root)
+	// err = watcher.Add(root)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// Watch the view directory.
+	err = watcher.Add(path.Join(root, "views"))
 	if err != nil {
 		log.Fatal(err)
 	}
