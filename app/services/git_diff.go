@@ -9,7 +9,7 @@ import (
 
 func SendPatchSinceCommit(commit, root string, path string) {
 	// Ignore hidden files and directories
-	if (strings.HasPrefix(path, ".") || strings.HasPrefix(filepath.Base(path), ".")) {
+	if strings.HasPrefix(path, ".") || strings.HasPrefix(filepath.Base(path), ".") {
 		return
 	}
 	patch, err := GetPatchSinceCommit(commit, root, path)
@@ -24,7 +24,6 @@ func SendPatchSinceCommit(commit, root string, path string) {
 		log.Println("\nErr:")
 		log.Println(err)
 	}
-	println("Has send: " + path)
 }
 
 func GetPatchSinceCommit(commit, root, path string) (string, error) {

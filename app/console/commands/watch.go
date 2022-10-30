@@ -12,6 +12,7 @@ import (
 
 type Watch struct {
 	Directory string `short:"d" flag:"directory" description:"Root directory of the Git repository" required:"true"`
+	Verbose   bool   `short:"v" flag:"verbose" description:"Show events"`
 }
 
 func (t Watch) Name() string {
@@ -24,7 +25,15 @@ func (t Watch) Description() string {
 
 func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	root := t.Directory
-	c.Info("Read directory: %s", root)
+	if t.Verbose {
+		c.Info("Read directory: %s", root)
+	}
+
+	// Guess the domain name
+	pathDirs := strings.Split(root, "/")
+	c.Line("confetti watch")
+	c.Info("Website: https://4s89fhw0.%s.nl", pathDirs[len(pathDirs)-1])
+	c.Info("Admin:   https://admin.4s89fhw0.%s.nl", pathDirs[len(pathDirs)-1])
 
 	remoteCommit := services.GitRemoteCommit(root)
 
@@ -51,18 +60,19 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 					log.Println("Not ok")
 					continue
 				}
-				log.Println(event.Name)
 				if strings.HasSuffix(event.Name, "swp") || strings.HasSuffix(event.Name, "~") {
 					continue
 				}
 				if event.Op == fsnotify.Chmod || event.Op == fsnotify.Rename {
-					log.Println("Ignore "+event.Op.String()+" by file:", event.Name)
+					if t.Verbose {
+						log.Println("Ignore "+event.Op.String()+" by file:", event.Name)
+					}
 					continue
 				}
-				log.Println("modified file:", event.Name)
 				path := strings.ReplaceAll(event.Name, root+"/", "")
-				log.Println("root:", root)
-				log.Println("after trim left:", path)
+				if t.Verbose {
+					log.Println("Modified file: ", event.Name)
+				}
 				services.SendPatchSinceCommit(remoteCommit, root, path)
 			case err, ok := <-watcher.Errors:
 				if !ok {
