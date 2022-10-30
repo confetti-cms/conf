@@ -1,0 +1,29 @@
+windows:
+  - name: Confetti cms
+    layout: main-vertical
+    root: /Users/reindertvetter/dev/confetti-cms
+    panes:
+      - name: 'Client'
+        commands:
+        - cd potlodenfabriek && composer install && cd ../
+        - cd client
+        - sleep 1
+        - clear
+        - go run . watch -d ../potlodenfabriek
+      - name: 'Parser'
+        commands:
+        - cd parser
+        - clear
+        - go run . app:serve -p 8000
+      - name: 'Render form'
+        commands:
+        - cd render-form
+        - clear
+        - npm run dev
+      - name: 'Render blade'
+        focus: true
+        commands:
+        - cd render-blade
+        - sudo lsof -t -i tcp:80 -s tcp:listen | sudo xargs kill
+        - clear
+        - sudo php artisan serve --port 80
