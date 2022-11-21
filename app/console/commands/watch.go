@@ -11,7 +11,7 @@ import (
 )
 
 type Watch struct {
-	Directory string `short:"d" flag:"directory" description:"Root directory of the Git repository" required:"true"`
+	Directory string `short:"p" flag:"path" description:"Root directory of the Git repository" required:"true"`
 	Verbose   bool   `short:"v" flag:"verbose" description:"Show events"`
 }
 
