@@ -16,11 +16,11 @@ type PatchBody struct {
 func SendPatch(requestBody PatchBody) error {
 	url := "http://localhost:3001/api/source"
 	method := "PATCH"
-	json, err := json.Marshal(requestBody)
+	payloadB, err := json.Marshal(requestBody)
 	if err != nil {
 		return err
 	}
-	payload := bytes.NewReader(json)
+	payload := bytes.NewReader(payloadB)
 
 	client := &http.Client{}
 	req, err := http.NewRequest(method, url, payload)
