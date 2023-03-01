@@ -37,7 +37,12 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 
 	remoteCommit := services.GitRemoteCommit(root)
 
-    services.SendPatchSinceCommit(remoteCommit, root, change.Path)
+	err := services.SendCheckout(services.CheckoutBody{
+		Commit: remoteCommit,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	changes := services.ChangedFilesSinceLastCommit(root)
 
@@ -71,7 +76,7 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 					}
 					continue
 				}
-                // Remove local file path
+				// Remove local file path
 				filePath := strings.ReplaceAll(event.Name, root+"/", "")
 				if t.Verbose {
 					log.Println("Modified file: ", event.Name)
