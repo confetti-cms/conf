@@ -37,9 +37,11 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 
 	remoteCommit := services.GitRemoteCommit(root)
 
+    services.SendPatchSinceCommit(remoteCommit, root, change.Path)
+
 	changes := services.ChangedFilesSinceLastCommit(root)
 
-	// First send patch since latest remote commit
+	// Send patch since latest remote commit
 	for _, change := range changes {
 		services.SendPatchSinceCommit(remoteCommit, root, change.Path)
 	}
@@ -69,11 +71,12 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 					}
 					continue
 				}
-				path := strings.ReplaceAll(event.Name, root+"/", "")
+                // Remove local file path
+				filePath := strings.ReplaceAll(event.Name, root+"/", "")
 				if t.Verbose {
 					log.Println("Modified file: ", event.Name)
 				}
-				services.SendPatchSinceCommit(remoteCommit, root, path)
+				services.SendPatchSinceCommit(remoteCommit, root, filePath)
 			case err, ok := <-watcher.Errors:
 				if !ok {
 					continue

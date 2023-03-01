@@ -2,28 +2,33 @@ package services
 
 import (
 	"fmt"
-	"log"
 	"path/filepath"
 	"strings"
 )
 
 func SendPatchSinceCommit(commit, root string, path string) {
-	// Ignore hidden files and directories
-	if strings.HasPrefix(path, ".") || strings.HasPrefix(filepath.Base(path), ".") {
-		return
-	}
-	patch, err := GetPatchSinceCommit(commit, root, path)
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = SendPatch(PatchBody{
-		Path:  path,
-		Patch: patch,
-	})
-	if err != nil {
-		log.Println("\nErr:")
-		log.Println(err)
-	}
+    println("Create patch: " + path)
+    // Ignore hidden files and directories
+    if strings.HasPrefix(path, ".") || strings.HasPrefix(filepath.Base(path), ".") {
+        return
+    }
+    patch, err := GetPatchSinceCommit(commit, root, path)
+    if err != nil {
+        println(err.Error())
+    }
+    if patch == "" {
+        println("Ignore (no change in patch): " + patch)
+        return
+    }
+    println("Send patch: " + path)
+    err = SendPatch(PatchBody{
+        Path:  path,
+        Patch: patch,
+        })
+    if err != nil {
+        println("Err:")
+        println(err.Error())
+    }
 }
 
 func GetPatchSinceCommit(commit, root, path string) (string, error) {
