@@ -25,10 +25,10 @@ func (t Watch) Description() string {
 }
 
 func (t Watch) Handle(c inter.Cli) inter.ExitCode {
-    root := t.Directory
-    if t.Verbose {
-        c.Info("Read directory: %s", root)
-    }
+	root := t.Directory
+	if t.Verbose {
+		c.Info("Read directory: %s", root)
+	}
 
 	// Guess the domain name
 	pathDirs := strings.Split(root, "/")
@@ -38,13 +38,13 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 
 	remoteCommit := services.GitRemoteCommit(root)
 
-    c.Line("Sync...")
-    if t.Reset {
-        c.Info("Reset all components")
-    }
+	c.Line("Sync...")
+	if t.Reset {
+		c.Info("Reset all components")
+	}
 	err := services.SendCheckout(services.CheckoutBody{
 		Commit: remoteCommit,
-        Reset: t.Reset,
+		Reset:  t.Reset,
 	})
 	if err != nil {
 		log.Fatal(err)
@@ -77,23 +77,31 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 				if strings.HasSuffix(event.Name, "swp") || strings.HasSuffix(event.Name, "~") {
 					continue
 				}
-				if event.Op == fsnotify.Chmod || event.Op == fsnotify.Rename {
+				if event.Op == fsnotify.Chmod {
 					if t.Verbose {
 						log.Println("Ignore "+event.Op.String()+" by file:", event.Name)
 					}
 					continue
 				}
-				// Remove local file path
+				// Trim local file path
 				filePath := strings.ReplaceAll(event.Name, root+"/", "")
 				if t.Verbose {
-					log.Println("Modified file: ", event.Name)
-				}
+					log.Println("Modified file: ", event.Name, " Op:", event.Op)
+                }
+                if event.Op == fsnotify.Rename {
+                    err = services.SendDeleteSource(filePath)
+                    if err != nil {
+                        println("Err:")
+                        println(err.Error())
+                    }
+                    continue
+                }
 				services.SendPatchSinceCommit(remoteCommit, root, filePath)
 			case err, ok := <-watcher.Errors:
 				if !ok {
 					continue
 				}
-				log.Println("error:", err)
+				log.Println("error: ", err)
 			}
 		}
 	}()
