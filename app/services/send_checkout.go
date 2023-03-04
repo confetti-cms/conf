@@ -6,6 +6,7 @@ import (
 
 type CheckoutBody struct {
 	Commit string `json:"commit"`
+	Reset  bool   `json:"reset"`
 }
 
 func SendCheckout(requestBody CheckoutBody) error {

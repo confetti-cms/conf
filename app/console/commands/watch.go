@@ -13,6 +13,7 @@ import (
 type Watch struct {
 	Directory string `short:"p" flag:"path" description:"Root directory of the Git repository" required:"true"`
 	Verbose   bool   `short:"v" flag:"verbose" description:"Show events"`
+	Reset     bool   `short:"r" flag:"reset" description:"All files are parsed again"`
 }
 
 func (t Watch) Name() string {
@@ -24,10 +25,10 @@ func (t Watch) Description() string {
 }
 
 func (t Watch) Handle(c inter.Cli) inter.ExitCode {
-	root := t.Directory
-	if t.Verbose {
-		c.Info("Read directory: %s", root)
-	}
+    root := t.Directory
+    if t.Verbose {
+        c.Info("Read directory: %s", root)
+    }
 
 	// Guess the domain name
 	pathDirs := strings.Split(root, "/")
@@ -37,8 +38,13 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 
 	remoteCommit := services.GitRemoteCommit(root)
 
+    c.Line("Sync...")
+    if t.Reset {
+        c.Info("Reset all components")
+    }
 	err := services.SendCheckout(services.CheckoutBody{
 		Commit: remoteCommit,
+        Reset: t.Reset,
 	})
 	if err != nil {
 		log.Fatal(err)
@@ -50,6 +56,7 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	for _, change := range changes {
 		services.SendPatchSinceCommit(remoteCommit, root, change.Path)
 	}
+	c.Info("Remote server in sync")
 
 	// Create new watcher.
 	watcher, err := fsnotify.NewWatcher()

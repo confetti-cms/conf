@@ -7,28 +7,28 @@ import (
 )
 
 func SendPatchSinceCommit(commit, root string, path string) {
-    println("Create patch: " + path)
-    // Ignore hidden files and directories
-    if strings.HasPrefix(path, ".") || strings.HasPrefix(filepath.Base(path), ".") {
-        return
-    }
-    patch, err := GetPatchSinceCommit(commit, root, path)
-    if err != nil {
-        println(err.Error())
-    }
-    if patch == "" {
-        println("Ignore (no change in patch): " + patch)
-        return
-    }
-    println("Send patch: " + path)
-    err = SendPatch(PatchBody{
-        Path:  path,
-        Patch: patch,
-        })
-    if err != nil {
-        println("Err:")
-        println(err.Error())
-    }
+	println("Create patch: " + path)
+	// Ignore hidden files and directories
+	if strings.HasPrefix(path, ".") || strings.HasPrefix(filepath.Base(path), ".") {
+		return
+	}
+	patch, err := GetPatchSinceCommit(commit, root, path)
+	if err != nil {
+		println(err.Error())
+	}
+	if patch == "" {
+		println("Ignore (no change in patch): " + path)
+		return
+	}
+	println("Send patch: " + path)
+	err = SendPatch(PatchBody{
+		Path:  path,
+		Patch: patch,
+	})
+	if err != nil {
+		println("Err:")
+		println(err.Error())
+	}
 }
 
 func GetPatchSinceCommit(commit, root, path string) (string, error) {
