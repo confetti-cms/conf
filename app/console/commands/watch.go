@@ -88,7 +88,7 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 				if t.Verbose {
 					log.Println("Modified file: ", event.Name, " Op:", event.Op)
                 }
-                if event.Op == fsnotify.Rename {
+                if event.Op == fsnotify.Rename || event.Op == fsnotify.Remove {
                     err = services.SendDeleteSource(filePath)
                     if err != nil {
                         println("Err:")
