@@ -1,13 +1,15 @@
 package commands
 
 import (
-	"log"
+    "github.com/spf13/cast"
+    "log"
 	"path"
 	"src/app/services"
 	"strings"
 
 	"github.com/confetti-framework/framework/inter"
 	"github.com/fsnotify/fsnotify"
+	"github.com/schollz/progressbar/v3"
 )
 
 type Watch struct {
@@ -52,11 +54,20 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 
 	changes := services.ChangedFilesSinceLastCommit(root)
 
-	// Send patch since latest remote commit
-	for _, change := range changes {
-		services.SendPatchSinceCommit(remoteCommit, root, change.Path)
+    bar := progressbar.Default(cast.ToInt64(len(changes)) * 2, "Sync local changes with Confetti")
+	// Send patch since latest remote commitS
+    for _, change := range changes {
+        change := change
+        go func() {
+    		patch := services.GetPatchSinceCommit(remoteCommit, root, change.Path, t.Verbose)
+            _ = bar.Add(1)
+            services.SendPatch(change.Path, patch, t.Verbose)
+            _ = bar.Add(1)
+            if bar.IsFinished() {
+                c.Info("Remote server in sync")
+            }
+        }()
 	}
-	c.Info("Remote server in sync")
 
 	// Create new watcher.
 	watcher, err := fsnotify.NewWatcher()
@@ -87,16 +98,17 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 				filePath := strings.ReplaceAll(event.Name, root+"/", "")
 				if t.Verbose {
 					log.Println("Modified file: ", event.Name, " Op:", event.Op)
-                }
-                if event.Op == fsnotify.Rename || event.Op == fsnotify.Remove {
-                    err = services.SendDeleteSource(filePath)
-                    if err != nil {
-                        println("Err:")
-                        println(err.Error())
-                    }
-                    continue
-                }
-				services.SendPatchSinceCommit(remoteCommit, root, filePath)
+				}
+				if event.Op == fsnotify.Rename || event.Op == fsnotify.Remove {
+					err = services.SendDeleteSource(filePath)
+					if err != nil {
+						println("Err SendDeleteSource:")
+						println(err.Error())
+					}
+					continue
+				}
+                patch := services.GetPatchSinceCommit(remoteCommit, root, filePath, t.Verbose)
+                services.SendPatch(filePath, patch, t.Verbose)
 			case err, ok := <-watcher.Errors:
 				if !ok {
 					continue

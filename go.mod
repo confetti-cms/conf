@@ -34,7 +34,7 @@ require (
 	github.com/motemen/go-quickfix v0.0.0-20210528191040-5ef99de20668 // indirect
 	github.com/peterh/liner v1.2.2 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
-	github.com/schollz/progressbar/v3 v3.8.6 // indirect
+	github.com/schollz/progressbar/v3 v3.8.6
 	github.com/tidwall/gjson v1.14.1 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect

@@ -15,7 +15,7 @@ func Send(url string, body any, method string) error {
     }
     payload := bytes.NewBuffer(payloadB)
     // Create request
-    client := &http.Client{Timeout: 10 * time.Second}
+    client := &http.Client{Timeout: 20 * time.Second}
     req, err := http.NewRequest(method, url, payload)
     if err != nil {
         return err

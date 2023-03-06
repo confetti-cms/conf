@@ -6,32 +6,22 @@ import (
 	"strings"
 )
 
-func SendPatchSinceCommit(commit, root string, path string) {
-	println("Create patch: " + path)
-	// Ignore hidden files and directories
-	if strings.HasPrefix(path, ".") || strings.HasPrefix(filepath.Base(path), ".") {
-		return
-	}
-	patch, err := GetPatchSinceCommit(commit, root, path)
+func GetPatchSinceCommit(commit, root string, path string, verbose bool) string {
+    if verbose {
+        println("Create patch: " + path)
+    }
+	patch, err := GetPatchSinceCommitE(commit, root, path)
 	if err != nil {
 		println(err.Error())
 	}
-	if patch == "" {
-		println("Ignore (no change in patch): " + path)
-		return
-	}
-	println("Send patch: " + path)
-	err = SendPatch(PatchBody{
-		Path:  path,
-		Patch: patch,
-	})
-	if err != nil {
-		println("Err:")
-		println(err.Error())
-	}
+    return patch
 }
 
-func GetPatchSinceCommit(commit, root, path string) (string, error) {
+func GetPatchSinceCommitE(commit, root, path string) (string, error) {
+    // Ignore hidden files and directories
+    if strings.HasPrefix(path, ".") || strings.HasPrefix(filepath.Base(path), ".") {
+        return "", nil
+    }
 	// Get tracked changes from git diff in patch format
 	st := fmt.Sprintf("cd %s && git diff %s -- %s", root, commit, path)
 	out, err := RunCommand(st)
