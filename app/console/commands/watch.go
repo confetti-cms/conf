@@ -1,8 +1,8 @@
 package commands
 
 import (
-    "github.com/spf13/cast"
-    "log"
+	"github.com/spf13/cast"
+	"log"
 	"path"
 	"src/app/services"
 	"strings"
@@ -31,12 +31,9 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	if t.Verbose {
 		c.Info("Read directory: %s", root)
 	}
-
 	// Guess the domain name
 	pathDirs := strings.Split(root, "/")
-	c.Line("confetti watch")
-	c.Info("Website: https://4s89fhw0.%s.nl", pathDirs[len(pathDirs)-1])
-	c.Info("Admin:   https://admin.4s89fhw0.%s.nl", pathDirs[len(pathDirs)-1])
+	c.Info("confetti watch")
 
 	remoteCommit := services.GitRemoteCommit(root)
 
@@ -51,22 +48,28 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	if err != nil {
 		log.Fatal(err)
 	}
-
+	// Get patches since latest remote commits
 	changes := services.ChangedFilesSinceLastCommit(root)
-
-    bar := progressbar.Default(cast.ToInt64(len(changes)) * 2, "Sync local changes with Confetti")
-	// Send patch since latest remote commitS
-    for _, change := range changes {
-        change := change
-        go func() {
-    		patch := services.GetPatchSinceCommit(remoteCommit, root, change.Path, t.Verbose)
-            _ = bar.Add(1)
-            services.SendPatch(change.Path, patch, t.Verbose)
-            _ = bar.Add(1)
-            if bar.IsFinished() {
-                c.Info("Remote server in sync")
-            }
-        }()
+	// Send patches since latest remote commits
+	bar := getBar(len(changes) * 2, "Sync local changes with Confetti")
+	whenDone := func() {
+		c.Info("Website: https://4s89fhw0.%s.nl", pathDirs[len(pathDirs)-1])
+		c.Info("Admin:   https://admin.4s89fhw0.%s.nl", pathDirs[len(pathDirs)-1])
+	}
+	for _, change := range changes {
+		change := change
+		go func() {
+			patch := services.GetPatchSinceCommit(remoteCommit, root, change.Path, t.Verbose)
+			_ = bar.Add(1)
+			services.SendPatch(change.Path, patch, t.Verbose)
+			_ = bar.Add(1)
+			if bar.IsFinished() {
+				whenDone()
+			}
+		}()
+	}
+	if len(changes) == 0 {
+		whenDone()
 	}
 
 	// Create new watcher.
@@ -107,8 +110,8 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 					}
 					continue
 				}
-                patch := services.GetPatchSinceCommit(remoteCommit, root, filePath, t.Verbose)
-                services.SendPatch(filePath, patch, t.Verbose)
+				patch := services.GetPatchSinceCommit(remoteCommit, root, filePath, t.Verbose)
+				services.SendPatch(filePath, patch, t.Verbose)
 			case err, ok := <-watcher.Errors:
 				if !ok {
 					continue
@@ -133,4 +136,11 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	<-make(chan struct{})
 
 	return inter.Success
+}
+
+func getBar(total int, description string) *progressbar.ProgressBar {
+	if total == 0 {
+		return nil
+	}
+	return progressbar.Default(cast.ToInt64(total), description)
 }
