@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"github.com/spf13/cast"
 	"log"
 	"path"
 	"src/app/services"
@@ -51,7 +50,7 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	// Get patches since latest remote commits
 	changes := services.ChangedFilesSinceLastCommit(root)
 	// Send patches since latest remote commits
-	bar := getBar(len(changes) * 2, "Sync local changes with Confetti")
+	bar := getBar(len(changes)*2, "Sync local changes with Confetti")
 	whenDone := func() {
 		c.Info("Website: https://4s89fhw0.%s.nl", pathDirs[len(pathDirs)-1])
 		c.Info("Admin:   https://admin.4s89fhw0.%s.nl", pathDirs[len(pathDirs)-1])
@@ -64,6 +63,7 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 			services.SendPatch(change.Path, patch, t.Verbose)
 			_ = bar.Add(1)
 			if bar.IsFinished() {
+				println("")
 				whenDone()
 			}
 		}()
@@ -71,14 +71,12 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	if len(changes) == 0 {
 		whenDone()
 	}
-
 	// Create new watcher.
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer watcher.Close()
-
 	// Start listening for events.
 	go func() {
 		for {
@@ -142,5 +140,17 @@ func getBar(total int, description string) *progressbar.ProgressBar {
 	if total == 0 {
 		return nil
 	}
-	return progressbar.Default(cast.ToInt64(total), description)
+
+	return progressbar.NewOptions(total,
+		progressbar.OptionEnableColorCodes(true),
+		progressbar.OptionShowBytes(false),
+		progressbar.OptionSetWidth(30),
+		progressbar.OptionSetDescription(description),
+		progressbar.OptionSetTheme(progressbar.Theme{
+			Saucer:        "[green]=[reset]",
+			SaucerHead:    "[green]>[reset]",
+			SaucerPadding: "-",
+			BarStart:      "|",
+			BarEnd:        "|",
+		}))
 }
