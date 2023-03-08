@@ -23,17 +23,19 @@ func SendPatch(path, patch string, verbose bool) {
 }
 
 func SendPatchE(path, patch string, verbose bool) error {
-	if patch == "" && verbose {
-		println("Ignore (no change in patch): " + path)
+	if patch == "" {
+		if verbose {
+			println("Ignore (no change in patch): " + path)
+		}
 		return nil
 	}
 	body := PatchBody{
 		Path:  path,
 		Patch: patch,
 	}
-    if verbose {
-        println("debug path:", path)
-        println("debug patch:", patch)
-    }
+	if verbose {
+		println("debug path:", path)
+		println("debug patch:", patch)
+	}
 	return Send("http://api.localhost/parser/source", body, http.MethodPatch)
 }

@@ -16,7 +16,7 @@ func Send(url string, body any, method string) error {
 	}
 	payload := bytes.NewBuffer(payloadB)
 	// Create request
-	client := &http.Client{Timeout: 20 * time.Second}
+	client := &http.Client{Timeout: 30 * time.Second}
 	req, err := http.NewRequest(method, url, payload)
 	if err != nil {
 		return err
@@ -37,7 +37,7 @@ func Send(url string, body any, method string) error {
 	}
 	if res.StatusCode > 299 {
 		println("Status:", res.StatusCode)
-		println("Request endpoint: " + url)
+        println("Request: ", method, url, cast.ToString(payloadB))
         println(cast.ToString(payload))
 		println("Response:")
 		println(cast.ToString(responseBody))

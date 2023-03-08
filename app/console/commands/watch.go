@@ -96,7 +96,7 @@ func (t Watch) getBar(total int, description string, c inter.Cli) *progressbar.P
 		progressbar.OptionSetDescription(description),
 		progressbar.OptionSetTheme(progressbar.Theme{
 			Saucer:        "[green]=[reset]",
-			SaucerHead:    "[green]>[reset]",
+			SaucerHead:    "[green]|[reset]",
 			SaucerPadding: "-",
 			BarStart:      "|",
 			BarEnd:        "|",
