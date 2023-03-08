@@ -10,8 +10,8 @@ type PatchBody struct {
 	Untracked bool   `json:"is_untracked"`
 }
 
-func SendPatch(patch, path string, verbose bool) {
-    err := SendPatchE(patch, path, verbose)
+func SendPatch(path, patch string, verbose bool) {
+	err := SendPatchE(path, patch, verbose)
 	if err != nil {
 		println("Err SendPatchE:")
 		println(err.Error())
@@ -22,7 +22,7 @@ func SendPatch(patch, path string, verbose bool) {
 	}
 }
 
-func SendPatchE(patch, path string, verbose bool) error {
+func SendPatchE(path, patch string, verbose bool) error {
 	if patch == "" && verbose {
 		println("Ignore (no change in patch): " + path)
 		return nil
@@ -31,5 +31,9 @@ func SendPatchE(patch, path string, verbose bool) error {
 		Path:  path,
 		Patch: patch,
 	}
+    if verbose {
+        println("debug path:", path)
+        println("debug patch:", patch)
+    }
 	return Send("http://api.localhost/parser/source", body, http.MethodPatch)
 }
