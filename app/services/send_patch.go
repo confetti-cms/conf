@@ -2,6 +2,7 @@ package services
 
 import (
 	"net/http"
+    "strings"
 )
 
 type PatchBody struct {
@@ -17,15 +18,12 @@ func SendPatch(path, patch string, verbose bool) {
 		println(err.Error())
 		return
 	}
-	if verbose {
-		println("Patch send: " + path)
-	}
 }
 
 func SendPatchE(path, patch string, verbose bool) error {
-	if patch == "" {
+	if patch == "" || strings.HasPrefix(path, ".") {
 		if verbose {
-			println("Ignore (no change in patch): " + path)
+			println("Ignore (no change in patch or hidden): " + path)
 		}
 		return nil
 	}
@@ -34,8 +32,11 @@ func SendPatchE(path, patch string, verbose bool) error {
 		Patch: patch,
 	}
 	if verbose {
-		println("debug path:", path)
-		println("debug patch:", patch)
+		println("Patch sending:", path)
 	}
-	return Send("http://api.localhost/parser/source", body, http.MethodPatch)
+	response := Send("http://api.localhost/parser/source", body, http.MethodPatch)
+    if verbose {
+        println("Patch send: " + path)
+    }
+    return response
 }
