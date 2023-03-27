@@ -64,7 +64,7 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 			_ = bar.Add(1)
 			services.SendPatch(change.Path, patch, t.Verbose)
             // Get and save hidden files in .confetti
-            services.InsertHiddenComponentE(root, change.Path, t.Verbose)
+            services.UpsertHiddenComponentE(root, change.Path, t.Verbose)
 			_ = bar.Add(1)
 		}()
 	}
@@ -73,10 +73,6 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
     c.Line("")
     c.Info("Website: https://4s89fhw0.%s.nl", pathDirs[len(pathDirs)-1])
     c.Info("Admin:   https://admin.4s89fhw0.%s.nl", pathDirs[len(pathDirs)-1])
-    // Write Component Class
-
-    // @todo
-
 	// Scan and watch next changes
 	scanner.Scanner{
 		Verbose:      t.Verbose,
