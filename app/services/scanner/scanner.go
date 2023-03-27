@@ -67,9 +67,6 @@ func (w Scanner) startListening(watcher *fsnotify.Watcher) {
 				continue
 			}
 			if event.Op == fsnotify.Chmod {
-				if w.Verbose {
-					log.Println("Ignore "+event.Op.String()+" by file:", event.Name)
-				}
 				continue
 			}
 			// Trim local file path
@@ -86,12 +83,21 @@ func (w Scanner) startListening(watcher *fsnotify.Watcher) {
 				continue
 			}
 			patch := services.GetPatchSinceCommit(w.RemoteCommit, w.Root, filePath, w.Verbose)
-			services.SendPatch(filePath, patch, w.Verbose)
+            services.SendPatch(filePath, patch, w.Verbose)
+            // Get and save hidden files in .confetti
+            services.InsertHiddenComponentE(w.Root, filePath, w.Verbose)
+			success(w.Verbose)
 		case err, ok := <-watcher.Errors:
 			if !ok {
 				continue
 			}
 			log.Println("error: ", err)
 		}
+	}
+}
+
+func success(verbose bool) {
+	if !verbose {
+		print(".")
 	}
 }

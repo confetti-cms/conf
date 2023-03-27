@@ -10,5 +10,6 @@ type CheckoutBody struct {
 }
 
 func SendCheckout(requestBody CheckoutBody) error {
-	return Send("http://api.localhost/parser/checkout", requestBody, http.MethodPut)
+	_, err := Send("http://api.localhost/parser/checkout", requestBody, http.MethodPut)
+    return err
 }

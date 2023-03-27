@@ -3,44 +3,45 @@ package services
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/confetti-framework/errors"
 	"github.com/spf13/cast"
 	"io/ioutil"
 	"net/http"
 	"time"
 )
 
-func Send(url string, body any, method string) error {
+func Send(url string, body any, method string) (string, error) {
 	payloadB, err := json.Marshal(body)
 	if err != nil {
-		return err
+		return "", err
 	}
 	payload := bytes.NewBuffer(payloadB)
 	// Create request
 	client := &http.Client{Timeout: 30 * time.Second}
 	req, err := http.NewRequest(method, url, payload)
 	if err != nil {
-		return err
+		return "", err
 	}
 	req.Header.Add("Accept-Language", "application/json")
 	req.Header.Add("Content-Type", "application/json")
 	// Do request
 	res, err := client.Do(req)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer res.Body.Close()
 	// Create response
 	responseBody, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		println("Error response: " + string(responseBody))
-		return err
+		println("error response: " + string(responseBody))
+		return "", err
 	}
 	if res.StatusCode > 299 {
-		println("Status:", res.StatusCode)
-        println("Request: ", method, url, cast.ToString(payloadB))
-        println(cast.ToString(payload))
-		println("Response:")
-		println(cast.ToString(responseBody))
+		return string(responseBody), errors.New(
+			"error with status: " + cast.ToString(res.StatusCode) +
+				" with request url: " + url +
+				" and response: " + string(responseBody),
+		)
 	}
-	return nil
+	return string(responseBody), nil
 }

@@ -2,7 +2,6 @@ package services
 
 import (
 	"fmt"
-	"path/filepath"
 	"strings"
 )
 
@@ -18,10 +17,6 @@ func GetPatchSinceCommit(commit, root string, path string, verbose bool) string 
 }
 
 func GetPatchSinceCommitE(commit, root, path string) (string, error) {
-    // Ignore hidden files and directories
-    if strings.HasPrefix(path, ".") || strings.HasPrefix(filepath.Base(path), ".") {
-        return "", nil
-    }
 	// Get tracked changes from git diff in patch format
 	st := fmt.Sprintf("cd %s && git diff %s -- %s", root, commit, path)
 	out, err := RunCommand(st)

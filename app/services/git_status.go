@@ -3,7 +3,8 @@ package services
 import (
 	"fmt"
 	"log"
-	"regexp"
+    "path/filepath"
+    "regexp"
 	"strings"
 
 	"github.com/spf13/cast"
@@ -43,6 +44,17 @@ func ChangedFilesSinceLastCommit(dir string) []GitFileChange {
 	changes = append(changes, getUntrackedChanges(rawStatuses)...)
 	changes = append(changes, getRenameOrCopyChanges(rawStatuses)...)
 	return changes
+}
+
+func IgnoreHidden(changes []GitFileChange) []GitFileChange {
+    result := []GitFileChange{}
+    for _, change := range changes {
+        if strings.HasPrefix(change.Path, ".") || strings.HasPrefix(filepath.Base(change.Path), ".") {
+            continue
+        }
+        result = append(result, change)
+    }
+    return result
 }
 
 // https://git-scm.com/docs/git-status#_stash_information

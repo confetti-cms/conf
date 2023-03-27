@@ -12,5 +12,6 @@ func SendDeleteSource(path string) error {
     if strings.HasPrefix(path, ".") || strings.HasPrefix(filepath.Base(path), ".") {
         return nil
     }
-	return Send("http://api.localhost/parser/source?path="+path, "", http.MethodDelete)
+	_, err := Send("http://api.localhost/parser/source?path="+path, "", http.MethodDelete)
+    return err
 }
