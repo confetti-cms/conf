@@ -127,7 +127,7 @@ func getMapContent(classNames []string) string {
     content := string(contentRaw)
 	for _, className := range classNames {
         functionName := lowerFirst(className)
-		function := `public function ` + functionName + `(string $key): ` + className + `
+		function := `    public function ` + functionName + `(string $key): ` + className + `
     {
         return new ` + className + `();
     }
