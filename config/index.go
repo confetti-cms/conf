@@ -11,4 +11,5 @@ package config
 */
 var Index = map[string]interface{}{
 	"App": App,
+	"Embed": Embed,
 }

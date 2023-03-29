@@ -70,6 +70,10 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	}
     // Wait for the goroutines to finish.
     wg.Wait()
+    err = services.UpsertHiddenMap(root, t.Verbose)
+    if err != nil {
+        log.Fatal(err)
+    }
     c.Line("")
     c.Info("Website: https://4s89fhw0.%s.nl", pathDirs[len(pathDirs)-1])
     c.Info("Admin:   https://admin.4s89fhw0.%s.nl", pathDirs[len(pathDirs)-1])

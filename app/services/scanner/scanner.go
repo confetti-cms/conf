@@ -86,6 +86,11 @@ func (w Scanner) startListening(watcher *fsnotify.Watcher) {
             services.SendPatch(filePath, patch, w.Verbose)
             // Get and save hidden files in .confetti
             services.UpsertHiddenComponentE(w.Root, filePath, w.Verbose)
+            err := services.UpsertHiddenMap(w.Root, w.Verbose)
+            if err != nil {
+                println("Err UpsertHiddenMap:")
+                println(err.Error())
+            }
 			success(w.Verbose)
 		case err, ok := <-watcher.Errors:
 			if !ok {
