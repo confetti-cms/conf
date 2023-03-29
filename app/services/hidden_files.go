@@ -125,8 +125,8 @@ func getComponentClassNamesByDirectory(dir string) ([]string, error) {
         if !unicode.IsUpper(rune(file.Name()[0])) {
             continue
         }
-		// We assume that the filename is equal to the classname.
-		name := strings.TrimRight(file.Name(), ".php")
+        // We assume that the filename is equal to the classname.
+        name := strings.TrimSuffix(file.Name(), ".php")
 		result = append(result, name)
 	}
 	return result, nil
@@ -139,7 +139,7 @@ func getMapContent(classNames []string) string {
 	}
 	content := string(contentRaw)
 	for _, className := range classNames {
-		functionName := lowerFirst(className)
+        functionName := lowerFirst(className)
 		function := `    public function ` + functionName + `(string $key): ` + className + `
     {
         return new ` + className + `();
