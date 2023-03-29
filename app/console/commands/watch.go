@@ -70,6 +70,10 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	}
     // Wait for the goroutines to finish.
     wg.Wait()
+    err = services.SaveStandardHiddenFiles(root, t.Verbose)
+    if err != nil {
+        log.Fatal(err)
+    }
     err = services.UpsertHiddenMap(root, t.Verbose)
     if err != nil {
         log.Fatal(err)
