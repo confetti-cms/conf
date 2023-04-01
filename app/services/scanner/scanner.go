@@ -75,6 +75,9 @@ func (w Scanner) startListening(watcher *fsnotify.Watcher) {
 				log.Println("Modified file: ", event.Name, " Op:", event.Op)
 			}
 			if event.Op == fsnotify.Rename || event.Op == fsnotify.Remove {
+				if w.Verbose {
+					println("Send delete Source: " + filePath)
+				}
 				err := services.SendDeleteSource(filePath)
 				if err != nil {
 					println("Err SendDeleteSource:")

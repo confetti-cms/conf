@@ -7,7 +7,6 @@ import (
 )
 
 func SendDeleteSource(path string) error {
-    println("Delete source: " + path)
     // Ignore hidden files and directories
     if strings.HasPrefix(path, ".") || strings.HasPrefix(filepath.Base(path), ".") {
         return nil

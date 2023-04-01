@@ -139,7 +139,7 @@ func getMapContent(classNames []string) string {
 	}
 	content := string(contentRaw)
 	for _, className := range classNames {
-        functionName := lowerFirst(className)
+        functionName := getFunctionByClass(className)
 		function := `    public function ` + functionName + `(string $key): ` + className + `
     {
         return new ` + className + `();
@@ -152,13 +152,17 @@ func getMapContent(classNames []string) string {
 	return content
 }
 
-func lowerFirst(input string) string {
-	if len(input) == 0 {
+func getFunctionByClass(className string) string {
+	if len(className) == 0 {
 		return ""
 	}
-	char := []rune(input)
+	// First character is lowercase
+	char := []rune(className)
 	char[0] = unicode.ToLower(char[0])
-	return string(char)
+	name := string(char)
+	// If class name is a preserved key, we suffix it before with _
+	name = strings.TrimSuffix(name, "_")
+	return name
 }
 
 func SaveStandardHiddenFiles(root string, verbose bool) error {
