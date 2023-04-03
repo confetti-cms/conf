@@ -1,15 +1,12 @@
 package commands
 
 import (
-	"io"
 	"log"
-    "src/app/services"
+	"src/app/services"
 	"src/app/services/scanner"
 	"strings"
-    "sync"
 
-    "github.com/confetti-framework/framework/inter"
-	"github.com/schollz/progressbar/v3"
+	"github.com/confetti-framework/framework/inter"
 )
 
 type Watch struct {
@@ -26,9 +23,6 @@ func (t Watch) Description() string {
 	return "Keeps your local files in sync with the server."
 }
 
-// WaitGroup is used to wait for the program to finish goroutines.
-var wg sync.WaitGroup
-
 func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	root := t.Directory
 	if t.Verbose {
@@ -37,7 +31,7 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	// Guess the domain name
 	pathDirs := strings.Split(root, "/")
 	c.Info("Confetti watch")
-    // Get commit of the remote repository
+	// Get commit of the remote repository
 	remoteCommit := services.GitRemoteCommit(root)
 	c.Line("Sync...")
 	if t.Reset {
@@ -50,67 +44,27 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	if err != nil {
 		log.Fatal(err)
 	}
-	// Get patches since latest remote commits
-	changes := services.ChangedFilesSinceLastCommit(root)
-    changes = services.IgnoreHidden(changes)
-	// Send patches since latest remote commits
-	bar := t.getBar(len(changes)*2, "Sync local changes with Confetti", c)
-    wg.Add(len(changes))
-	for _, change := range changes {
-		change := change
-		go func() {
-            defer wg.Done()
-			patch := services.GetPatchSinceCommit(remoteCommit, root, change.Path, t.Verbose)
-			_ = bar.Add(1)
-			services.SendPatch(change.Path, patch, t.Verbose)
-            // Get and save hidden files in .confetti
-            services.UpsertHiddenComponentE(root, change.Path, t.Verbose)
-			_ = bar.Add(1)
-		}()
+	// First get the standard hidden files
+	// we override the files when there are local changes
+	err = services.SaveStandardHiddenFiles(root, t.Verbose)
+	if err != nil {
+		log.Fatal(err)
 	}
-    // Wait for the goroutines to finish.
-    wg.Wait()
-    err = services.SaveStandardHiddenFiles(root, t.Verbose)
-    if err != nil {
-        log.Fatal(err)
-    }
-    err = services.UpsertHiddenMap(root, t.Verbose)
-    if err != nil {
-        log.Fatal(err)
-    }
-    c.Line("")
-    c.Info("Website: https://4s89fhw0.%s.nl", pathDirs[len(pathDirs)-1])
-    c.Info("Admin:   https://admin.4s89fhw0.%s.nl", pathDirs[len(pathDirs)-1])
+	services.PatchDir(root, remoteCommit, c.Writer(), t.Verbose)
+	err = services.UpsertHiddenMap(root, t.Verbose)
+	if err != nil {
+		log.Fatal(err)
+	}
+	c.Line("")
+	c.Info("Website: https://4s89fhw0.%s.nl", pathDirs[len(pathDirs)-1])
+	c.Info("Admin:   https://admin.4s89fhw0.%s.nl", pathDirs[len(pathDirs)-1])
 	// Scan and watch next changes
 	scanner.Scanner{
 		Verbose:      t.Verbose,
 		RemoteCommit: remoteCommit,
 		Root:         root,
-	}.Watch()
+		Writer:       c.Writer(),
+	}.Watch("")
 	// The watch is preventing the code from ever getting here
 	return inter.Success
-}
-
-func (t Watch) getBar(total int, description string, c inter.Cli) *progressbar.ProgressBar {
-	if total == 0 {
-		return nil
-	}
-	writer := c.Writer()
-	if t.Verbose {
-		// Ignore progressbar in verbose mode
-		writer = io.Discard
-	}
-	return progressbar.NewOptions(total,
-		progressbar.OptionEnableColorCodes(true),
-		progressbar.OptionSetWriter(writer),
-		progressbar.OptionShowBytes(false),
-		progressbar.OptionSetWidth(30),
-		progressbar.OptionSetDescription(description),
-		progressbar.OptionSetTheme(progressbar.Theme{
-			Saucer:        "[green]=[reset]",
-			SaucerHead:    "[green]|[reset]",
-			SaucerPadding: "-",
-			BarStart:      "|",
-			BarEnd:        "|",
-		}))
 }

@@ -2,6 +2,7 @@ package scanner
 
 import (
 	"github.com/fsnotify/fsnotify"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -13,9 +14,13 @@ type Scanner struct {
 	Verbose      bool
 	RemoteCommit string
 	Root         string
+	Writer       io.Writer
 }
 
-func (w Scanner) Watch() {
+func (w Scanner) Watch(dir string) {
+	if dir == "" {
+		dir = w.Root
+	}
 	// Create new watcher.
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -25,7 +30,7 @@ func (w Scanner) Watch() {
 	// Start listening for events.
 	go w.startListening(watcher)
 	// Add all directories to the watcher
-	w.addRecursive(watcher, w.Root)
+	w.addRecursive(watcher, dir)
 	// Block main goroutine forever.
 	<-make(chan struct{})
 }
@@ -70,30 +75,48 @@ func (w Scanner) startListening(watcher *fsnotify.Watcher) {
 				continue
 			}
 			// Trim local file path
-			filePath := strings.ReplaceAll(event.Name, w.Root+"/", "")
+			file := strings.ReplaceAll(event.Name, w.Root+"/", "")
 			if w.Verbose {
 				log.Println("Modified file: ", event.Name, " Op:", event.Op)
 			}
-			if event.Op == fsnotify.Rename || event.Op == fsnotify.Remove {
+			// Removed (by removing or renaming)
+			if strings.Contains(event.Op.String(), fsnotify.Rename.String()) ||
+				strings.Contains(event.Op.String(), fsnotify.Remove.String()) {
 				if w.Verbose {
-					println("Send delete Source: " + filePath)
+					println("Send delete Source: " + file)
 				}
-				err := services.SendDeleteSource(filePath)
+				err := services.SendDeleteSource(file)
 				if err != nil {
-					println("Err SendDeleteSource:")
+					println("Err: SendDeleteSource:")
 					println(err.Error())
 				}
 				continue
 			}
-			patch := services.GetPatchSinceCommit(w.RemoteCommit, w.Root, filePath, w.Verbose)
-            services.SendPatch(filePath, patch, w.Verbose)
+			fileInfo, err := os.Stat(event.Name)
+			if err != nil {
+				println("Err: when check file for dir: " + err.Error())
+				println(event.Name)
+				continue
+			}
+			if fileInfo.IsDir() {
+				if w.Verbose {
+					println("Patch and watch new dir: " + event.Name)
+				}
+				services.PatchDir(w.Root, w.RemoteCommit, w.Writer, w.Verbose)
+				w.addRecursive(watcher, event.Name)
+				continue
+			}
+			patch := services.GetPatchSinceCommit(w.RemoteCommit, w.Root, file, w.Verbose)
+            services.SendPatch(file, patch, w.Verbose)
             // Get and save hidden files in .confetti
-            services.UpsertHiddenComponentE(w.Root, filePath, w.Verbose)
-            err := services.UpsertHiddenMap(w.Root, w.Verbose)
-            if err != nil {
-                println("Err UpsertHiddenMap:")
-                println(err.Error())
-            }
+            done := services.UpsertHiddenComponentE(w.Root, file, w.Verbose)
+			if done {
+				err := services.UpsertHiddenMap(w.Root, w.Verbose)
+				if err != nil {
+					println("Err: UpsertHiddenMap:")
+					println(err.Error())
+				}
+			}
 			success(w.Verbose)
 		case err, ok := <-watcher.Errors:
 			if !ok {

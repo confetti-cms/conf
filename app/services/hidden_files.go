@@ -21,21 +21,22 @@ const componentsDir = hiddenDir + "/Components"
 const componentConfigSuffix = "omponent.blade.php"
 const componentClassSuffix = "omponent.class.php"
 
-func UpsertHiddenComponentE(root string, file string, verbose bool) {
-	err := UpsertHiddenComponent(root, file, verbose)
+func UpsertHiddenComponentE(root string, file string, verbose bool) bool {
+	err, done := UpsertHiddenComponent(root, file, verbose)
 	if err != nil {
 		println("Err UpsertHiddenComponentE:")
 		println(err.Error())
-		return
+		return false
 	}
+	return done
 }
 
-func UpsertHiddenComponent(root string, file string, verbose bool) error {
+func UpsertHiddenComponent(root string, file string, verbose bool) (error, bool) {
 	originFile := file
 	// Check if it is a component generator
 	if !strings.HasSuffix(file, componentConfigSuffix) {
 		if !strings.HasSuffix(file, componentClassSuffix) {
-			return nil
+			return nil, false
 		}
 		// If composer class has changed, handle it the same as the config file
 		file = strings.Replace(file, componentClassSuffix, componentConfigSuffix, 1)
@@ -46,40 +47,40 @@ func UpsertHiddenComponent(root string, file string, verbose bool) error {
 	// Get content of component
 	body, err := Send("http://api.localhost/parser/source/components?file=/"+file, nil, http.MethodGet)
 	if err != nil {
-		return err
+		return err, false
 	}
 	// Get file content from response
 	contentsRaw := []map[string]string{}
 	json.Unmarshal([]byte(body), &contentsRaw)
 	if len(contentsRaw) == 0 {
-		return errors.New("Can not upsert hidden component: file not found: " + file)
+		return errors.New("Can not upsert hidden component: file not found: " + file), false
 	}
 	contentRaw := contentsRaw[0]
 	content64 := contentRaw["content"]
 	name := contentRaw["name_class"]
 	content, err := base64.StdEncoding.DecodeString(content64)
 	if err != nil {
-		return err
+		return err, false
 	}
 	// Save hidden component
     target := path.Join(root, componentsDir, name+".php")
 	err = os.MkdirAll(path.Dir(target), os.ModePerm)
 	if err != nil {
-		return err
+		return err, false
 	}
 	f, err := os.OpenFile(target, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
 	if err != nil {
-		return err
+		return err, false
 	}
 	defer f.Close()
 	_, err = f.WriteString(string(content))
 	if err != nil {
-		return err
+		return err, false
 	}
 	if verbose {
 		println("Hidden component saved: " + target)
 	}
-	return nil
+	return nil, true
 }
 
 func UpsertHiddenMap(root string, verbose bool) error {
@@ -102,7 +103,7 @@ func UpsertHiddenMap(root string, verbose bool) error {
 	defer f.Close()
 	_, err = f.WriteString(content)
 	if verbose {
-		println("Hidden component saved: " + target)
+		println("Hidden Map component saved: " + target)
 	}
 	return err
 }

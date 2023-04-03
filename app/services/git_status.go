@@ -3,8 +3,9 @@ package services
 import (
 	"fmt"
 	"log"
-    "path/filepath"
-    "regexp"
+	"os"
+	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/spf13/cast"
@@ -47,14 +48,34 @@ func ChangedFilesSinceLastCommit(dir string) []GitFileChange {
 }
 
 func IgnoreHidden(changes []GitFileChange) []GitFileChange {
-    result := []GitFileChange{}
-    for _, change := range changes {
-        if strings.HasPrefix(change.Path, ".") || strings.HasPrefix(filepath.Base(change.Path), ".") {
-            continue
-        }
-        result = append(result, change)
-    }
-    return result
+	result := []GitFileChange{}
+	for _, change := range changes {
+		if strings.HasPrefix(change.Path, ".") || strings.HasPrefix(filepath.Base(change.Path), ".") {
+			continue
+		}
+		result = append(result, change)
+	}
+	return result
+}
+
+func RemoveIfDeleted(change GitFileChange, root string) bool {
+	if change.UnstagedStatus != GitStatusDeleted && change.StagedStatus != GitStatusDeleted {
+		return false
+	}
+	_, err := os.Stat(change.Path)
+	if !os.IsNotExist(err) {
+		return false
+	}
+	file := fileWithoutRoot(change.Path, root)
+	err = SendDeleteSource(file)
+	if err != nil {
+		panic(err)
+	}
+	return true
+}
+
+func fileWithoutRoot(path, root string) string {
+	return strings.ReplaceAll(path, root+"/", "")
 }
 
 // https://git-scm.com/docs/git-status#_stash_information
