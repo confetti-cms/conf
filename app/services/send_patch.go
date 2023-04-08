@@ -4,6 +4,7 @@ import (
 	"github.com/schollz/progressbar/v3"
 	"io"
 	"net/http"
+	"src/config"
 	"sync"
 )
 
@@ -73,7 +74,8 @@ func SendPatchE(path, patch string, verbose bool) error {
 	if verbose {
 		println("Patch sending:", path)
 	}
-	_, err := Send("http://api.localhost/parser/source", body, http.MethodPatch)
+	host := config.App.Host
+	_, err := Send("http://api." + host + "/parser/source", body, http.MethodPatch)
     if verbose {
         println("Patch send: " + path)
     }

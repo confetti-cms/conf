@@ -2,6 +2,7 @@ package services
 
 import (
 	"net/http"
+	"src/config"
 )
 
 type CheckoutBody struct {
@@ -10,6 +11,7 @@ type CheckoutBody struct {
 }
 
 func SendCheckout(requestBody CheckoutBody) error {
-	_, err := Send("http://api.localhost/parser/checkout", requestBody, http.MethodPut)
+	host := config.App.Host
+	_, err := Send("http://api." + host + "/parser/checkout", requestBody, http.MethodPut)
     return err
 }

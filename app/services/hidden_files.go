@@ -45,7 +45,8 @@ func UpsertHiddenComponent(root string, file string, verbose bool) (error, bool)
 		println("Hidden component triggered by: " + originFile)
 	}
 	// Get content of component
-	body, err := Send("http://api.localhost/parser/source/components?file=/"+file, nil, http.MethodGet)
+	host := config.App.Host
+	body, err := Send("http://api." + host +"/parser/source/components?file=/"+file, nil, http.MethodGet)
 	if err != nil {
 		return err, false
 	}
@@ -168,7 +169,8 @@ func getFunctionByClass(className string) string {
 
 func SaveStandardHiddenFiles(root string, verbose bool) error {
 	// Get content of component
-	body, err := Send("http://api.localhost/parser/source/components/standard", nil, http.MethodGet)
+	host := config.App.Host
+	body, err := Send("http://api." + host + "/parser/source/components/standard", nil, http.MethodGet)
 	if err != nil {
 		return err
 	}

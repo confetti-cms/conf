@@ -9,7 +9,7 @@ import (
 
 var App = struct {
 	Name,
-	Url,
+	Host,
 	AssetUrl,
 	LineSeparator,
 	Key,
@@ -35,6 +35,8 @@ var App = struct {
 	   |
 	*/
 	Name: env.StringOr("APP_NAME", "Confetti"),
+
+	Host: env.String("APP_HOST"),
 
 	/*
 		|--------------------------------------------------------------------------
