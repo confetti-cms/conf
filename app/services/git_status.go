@@ -102,7 +102,7 @@ func getOrdinaryChanges(rawStatuses []string) []GitFileChange {
 
 // https://git-scm.com/docs/git-status#_stash_information
 func getRenameOrCopyChanges(rawStatuses []string) []GitFileChange {
-	compiler := regexp.MustCompile(`^2\s(?P<X>[R\.])(?P<Y>[R\.]).*\sR(?P<score>\d{1,3})\s` + rPath + `\s` + rFromPath + `$`)
+	compiler := regexp.MustCompile(`^2\s(?P<X>[MR\.])(?P<Y>[MR\.]).*\sR(?P<score>\d{1,3})\s` + rPath + `\s` + rFromPath + `$`)
 
 	fileChanges := []GitFileChange{}
 	for _, status := range rawStatuses {

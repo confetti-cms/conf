@@ -56,6 +56,9 @@ func SendPatch(path, patch string, verbose bool) {
 		println(err.Error())
 		return
 	}
+	if verbose {
+		println("Patch send: " + path)
+	}
 }
 
 func SendPatchE(path, patch string, verbose bool) error {
@@ -74,9 +77,6 @@ func SendPatchE(path, patch string, verbose bool) error {
 	}
 	host := config.App.Host
 	_, err := Send("http://api." + host + "/parser/source", body, http.MethodPatch)
-    if verbose {
-        println("Patch send: " + path)
-    }
     return err
 }
 
