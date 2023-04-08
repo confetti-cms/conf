@@ -44,14 +44,9 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	if err != nil {
 		log.Fatal(err)
 	}
-	// First get the standard hidden files
-	// we override the files when there are local changes
-	err = services.SaveStandardHiddenFiles(root, t.Verbose)
-	if err != nil {
-		log.Fatal(err)
-	}
 	services.PatchDir(root, remoteCommit, c.Writer(), t.Verbose)
-	err = services.UpsertHiddenMap(root, t.Verbose)
+	// Get the standard hidden files
+	err = services.GetHiddenFiles(root, t.Verbose)
 	if err != nil {
 		log.Fatal(err)
 	}

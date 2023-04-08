@@ -42,8 +42,6 @@ func PatchDir(root string, remoteCommit string, writer io.Writer, verbose bool) 
 			patch := GetPatchSinceCommit(remoteCommit, root, change.Path, verbose)
 			_ = bar.Add(1)
 			SendPatch(change.Path, patch, verbose)
-			// Get and save hidden files in .confetti
-			UpsertHiddenComponentE(root, change.Path, verbose)
 			_ = bar.Add(1)
 		}()
 	}
