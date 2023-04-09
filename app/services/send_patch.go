@@ -19,7 +19,6 @@ var wg sync.WaitGroup
 
 func PatchDir(root string, remoteCommit string, writer io.Writer, verbose bool) {
 	// Get patches since latest remote commits
-	println("Remote commit: " + remoteCommit)
 	changes := ChangedFilesSinceRemoteCommit(root, remoteCommit)
 	changes = IgnoreHidden(changes)
 	// Send patches since latest remote commits

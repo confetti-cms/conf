@@ -26,7 +26,7 @@ const (
 
 type GitFileChange struct {
 	Status         Status
-	UnstagedStatus Status
+	UnstagedStatus Status // @todo remove UnstagedStatus
 	Path           string
 	FromPath       string
 	Score          int
