@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -50,12 +49,25 @@ func ChangedFilesSinceLastCommit(dir string) []GitFileChange {
 func IgnoreHidden(changes []GitFileChange) []GitFileChange {
 	result := []GitFileChange{}
 	for _, change := range changes {
-		if strings.HasPrefix(change.Path, ".") || strings.HasPrefix(filepath.Base(change.Path), ".") {
+		if IgnoreFile(change.Path) {
 			continue
 		}
 		result = append(result, change)
 	}
 	return result
+}
+
+func IgnoreFile(file string) bool {
+	if strings.Contains(file, "/.") {
+		return true
+	}
+	if strings.HasPrefix(file, ".") {
+		return true
+	}
+	if strings.HasSuffix(file, "swp") || strings.HasSuffix(file, "~") {
+		return true
+	}
+	return false
 }
 
 func RemoveIfDeleted(change GitFileChange, root string) bool {

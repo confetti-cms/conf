@@ -46,7 +46,7 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	}
 	services.PatchDir(root, remoteCommit, c.Writer(), t.Verbose)
 	// Get the standard hidden files
-	err = services.GetHiddenFiles(root, t.Verbose)
+	err = services.FetchHiddenFiles(root, t.Verbose)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -7,14 +7,29 @@ import (
 	"os"
 	"path"
 	"src/config"
+	"strings"
 )
 
 const hiddenDir = ".confetti"
 
-func GetHiddenFiles(root string, verbose bool) error {
+// ComponentConfigSuffix
+// Actually, there should be another letter 'c' as the first letter here,
+// but we don't consider it because it can be in lowercase or uppercase.
+const ComponentConfigSuffix = "omponent.blade.php"
+const ComponentClassSuffix = "omponent.class.php"
+
+func IsHiddenFileGenerator(file string) bool {
+	return strings.HasSuffix(file, ComponentConfigSuffix) || strings.HasSuffix(file, ComponentClassSuffix)
+}
+
+func FetchHiddenFiles(root string, verbose bool) error {
 	// Get content of component
 	host := config.App.Host
 	body, err := Send("http://api." + host + "/parser/source/components", nil, http.MethodGet)
+	if err != nil {
+		return err
+	}
+	err = os.RemoveAll(path.Join(root, hiddenDir))
 	if err != nil {
 		return err
 	}

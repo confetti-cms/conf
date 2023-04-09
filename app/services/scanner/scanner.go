@@ -37,7 +37,7 @@ func (w Scanner) Watch(dir string) {
 
 func (w Scanner) addRecursive(watcher *fsnotify.Watcher, dir string) {
 	err := filepath.WalkDir(dir, func(walkPath string, d os.DirEntry, err error) error {
-		if strings.Contains(walkPath, "/.") {
+		if services.IgnoreFile(walkPath) {
 			return nil
 		}
 		if !d.IsDir() {
@@ -68,7 +68,8 @@ func (w Scanner) startListening(watcher *fsnotify.Watcher) {
 				log.Println("Not ok")
 				continue
 			}
-			if strings.HasSuffix(event.Name, "swp") || strings.HasSuffix(event.Name, "~") {
+			// Ignore hidden files and directories
+			if services.IgnoreFile(event.Name) {
 				continue
 			}
 			if event.Op == fsnotify.Chmod {
@@ -90,6 +91,12 @@ func (w Scanner) startListening(watcher *fsnotify.Watcher) {
 					println("Err: SendDeleteSource:")
 					println(err.Error())
 				}
+				if services.IsHiddenFileGenerator(file) {
+					err = services.FetchHiddenFiles(w.Root, w.Verbose)
+					if err != nil {
+						log.Fatal(err)
+					}
+				}
 				continue
 			}
 			fileInfo, err := os.Stat(event.Name)
@@ -108,9 +115,11 @@ func (w Scanner) startListening(watcher *fsnotify.Watcher) {
 			}
 			patch := services.GetPatchSinceCommit(w.RemoteCommit, w.Root, file, w.Verbose)
             services.SendPatch(file, patch, w.Verbose)
-			err = services.GetHiddenFiles(w.Root, w.Verbose)
-			if err != nil {
-				log.Fatal(err)
+			if services.IsHiddenFileGenerator(file) {
+				err = services.FetchHiddenFiles(w.Root, w.Verbose)
+				if err != nil {
+					log.Fatal(err)
+				}
 			}
 			success(w.Verbose)
 		case err, ok := <-watcher.Errors:
