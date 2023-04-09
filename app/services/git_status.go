@@ -25,20 +25,22 @@ const (
 )
 
 type GitFileChange struct {
-	StagedStatus   Status
+	Status         Status
 	UnstagedStatus Status
 	Path           string
 	FromPath       string
 	Score          int
 }
 
-func ChangedFilesSinceLastCommit(dir string) []GitFileChange {
+func ChangedFilesSinceRemoteCommit(dir, remoteCommit string) []GitFileChange {
 	// Get all changes from git status in plain text
-	st := fmt.Sprintf("git -C %s status --porcelain=2 --untracked-files=all", dir)
+	st := fmt.Sprintf("cd %s && git diff %s --name-status", dir, remoteCommit)
 	raw, err := RunCommand(st)
 	if err != nil {
+		println("Err: from command: " + st)
 		log.Fatal(err)
 	}
+
 	rawStatuses := strings.Split(strings.Trim(raw, "\n"), "\n")
 	changes := getOrdinaryChanges(rawStatuses)
 	changes = append(changes, getUntrackedChanges(rawStatuses)...)
@@ -74,7 +76,7 @@ func IgnoreFile(file string) bool {
 }
 
 func RemoveIfDeleted(change GitFileChange, root string) bool {
-	if change.UnstagedStatus != GitStatusDeleted && change.StagedStatus != GitStatusDeleted {
+	if change.UnstagedStatus != GitStatusDeleted && change.Status != GitStatusDeleted {
 		return false
 	}
 	_, err := os.Stat(change.Path)
@@ -95,7 +97,7 @@ func fileWithoutRoot(path, root string) string {
 
 // https://git-scm.com/docs/git-status#_stash_information
 func getOrdinaryChanges(rawStatuses []string) []GitFileChange {
-	compiler := regexp.MustCompile(`^1\s(?P<X>[AMD\.])(?P<Y>[MD\.]).*\s` + rPath + `$`)
+	compiler := regexp.MustCompile(`^(?P<status>[AMD\.])\s+` + rPath + `$`)
 
 	fileChanges := []GitFileChange{}
 	for _, status := range rawStatuses {
@@ -104,11 +106,8 @@ func getOrdinaryChanges(rawStatuses []string) []GitFileChange {
 			continue
 		}
 		fileChanges = append(fileChanges, GitFileChange{
-			// A character field contains the staged X value described, with unchanged indicated by a ".".
-			StagedStatus: Status(match["X"]),
-			// A character field contains the unstaged Y value described, with unchanged indicated by a ".".
-			UnstagedStatus: Status(match["Y"]),
-			Path:           match["path"],
+			Status: Status(match["status"]),
+			Path:   match["path"],
 		})
 	}
 
@@ -127,7 +126,7 @@ func getRenameOrCopyChanges(rawStatuses []string) []GitFileChange {
 		}
 		fileChanges = append(fileChanges, GitFileChange{
 			// A character field contains the staged X value described, with unchanged indicated by a ".".
-			StagedStatus: Status(match["X"]),
+			Status: Status(match["X"]),
 			// A character field contains the unstaged Y value described, with unchanged indicated by a ".".
 			UnstagedStatus: Status(match["Y"]),
 			FromPath:       match["from_path"],

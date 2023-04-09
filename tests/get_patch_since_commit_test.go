@@ -1,7 +1,6 @@
 package tests
 
 import (
-	"path"
 	"src/app/services"
 	"strings"
 	"testing"
