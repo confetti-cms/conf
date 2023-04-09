@@ -58,6 +58,9 @@ func IgnoreHidden(changes []GitFileChange) []GitFileChange {
 }
 
 func IgnoreFile(file string) bool {
+	if file == "" || file == "/" {
+		return true
+	}
 	if strings.Contains(file, "/.") {
 		return true
 	}

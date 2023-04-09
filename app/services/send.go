@@ -39,7 +39,7 @@ func Send(url string, body any, method string) (string, error) {
 	if res.StatusCode > 299 {
 		return string(responseBody), errors.New(
 			"error with status: " + cast.ToString(res.StatusCode) +
-				" with request url: " + url +
+				" with request: " + method + " " + url +
 				" and response: " + string(responseBody),
 		)
 	}

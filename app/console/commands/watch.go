@@ -28,8 +28,6 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	if t.Verbose {
 		c.Info("Read directory: %s", root)
 	}
-	// Guess the domain name
-	pathDirs := strings.Split(root, "/")
 	c.Info("Confetti watch")
 	// Get commit of the remote repository
 	remoteCommit := services.GitRemoteCommit(root)
@@ -51,6 +49,8 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 		log.Fatal(err)
 	}
 	c.Line("")
+	// Guess the domain name (fake for now)
+	pathDirs := strings.Split(root, "/")
 	c.Info("Website: https://4s89fhw0.%s.nl", pathDirs[len(pathDirs)-1])
 	c.Info("Admin:   https://admin.4s89fhw0.%s.nl", pathDirs[len(pathDirs)-1])
 	// Scan and watch next changes
