@@ -6,8 +6,6 @@ import (
 	"os"
 	"regexp"
 	"strings"
-
-	"github.com/spf13/cast"
 )
 
 type Status string
@@ -26,10 +24,7 @@ const (
 
 type GitFileChange struct {
 	Status         Status
-	UnstagedStatus Status // @todo remove UnstagedStatus
 	Path           string
-	FromPath       string
-	Score          int
 }
 
 func ChangedFilesSinceRemoteCommit(dir, remoteCommit string) []GitFileChange {
@@ -43,8 +38,6 @@ func ChangedFilesSinceRemoteCommit(dir, remoteCommit string) []GitFileChange {
 
 	rawStatuses := strings.Split(strings.Trim(raw, "\n"), "\n")
 	changes := getOrdinaryChanges(rawStatuses)
-	changes = append(changes, getUntrackedChanges(rawStatuses)...)
-	changes = append(changes, getRenameOrCopyChanges(rawStatuses)...)
 	return changes
 }
 
@@ -76,7 +69,7 @@ func IgnoreFile(file string) bool {
 }
 
 func RemoveIfDeleted(change GitFileChange, root string) bool {
-	if change.UnstagedStatus != GitStatusDeleted && change.Status != GitStatusDeleted {
+	if change.Status != GitStatusDeleted {
 		return false
 	}
 	_, err := os.Stat(change.Path)
@@ -108,49 +101,6 @@ func getOrdinaryChanges(rawStatuses []string) []GitFileChange {
 		fileChanges = append(fileChanges, GitFileChange{
 			Status: Status(match["status"]),
 			Path:   match["path"],
-		})
-	}
-
-	return fileChanges
-}
-
-// https://git-scm.com/docs/git-status#_stash_information
-func getRenameOrCopyChanges(rawStatuses []string) []GitFileChange {
-	compiler := regexp.MustCompile(`^2\s(?P<X>[MR\.])(?P<Y>[MR\.]).*\sR(?P<score>\d{1,3})\s` + rPath + `\s` + rFromPath + `$`)
-
-	fileChanges := []GitFileChange{}
-	for _, status := range rawStatuses {
-		match, found := parseByRegex(status, compiler)
-		if !found {
-			continue
-		}
-		fileChanges = append(fileChanges, GitFileChange{
-			// A character field contains the staged X value described, with unchanged indicated by a ".".
-			Status: Status(match["X"]),
-			// A character field contains the unstaged Y value described, with unchanged indicated by a ".".
-			UnstagedStatus: Status(match["Y"]),
-			FromPath:       match["from_path"],
-			Path:           match["path"],
-			Score:          cast.ToInt(match["score"]),
-		})
-	}
-
-	return fileChanges
-}
-
-// https://git-scm.com/docs/git-status#_stash_information
-func getUntrackedChanges(rawStatuses []string) []GitFileChange {
-	compiler := regexp.MustCompile(`^\?\s` + rPath + `$`)
-
-	fileChanges := []GitFileChange{}
-	for _, status := range rawStatuses {
-		match, found := parseByRegex(status, compiler)
-		if !found {
-			continue
-		}
-		fileChanges = append(fileChanges, GitFileChange{
-			UnstagedStatus: GitStatusUntracked,
-			Path:           match["path"],
 		})
 	}
 

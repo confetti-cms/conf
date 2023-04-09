@@ -92,49 +92,6 @@ func Test_file_with_special_caracters(t *testing.T) {
 	i.Equal("images/Logo-_.svg", changes[0].Path)
 }
 
-func Test_status_untracked(t *testing.T) {
-	// Given
-	dir := initTestGit()
-	touchFile(dir, "Logo.svg")
-	// When
-	changes := services.ChangedFilesSinceRemoteCommit(dir, "")
-	// Then
-	i := is.New(t)
-	i.True(len(changes) == 1)
-	i.Equal(services.GitStatusUntracked, changes[0].UnstagedStatus)
-}
-
-func Test_status_unstaged_modified(t *testing.T) {
-	// Given
-	dir := initTestGit()
-	touchFile(dir, "logo.svg")
-	gitAdd(dir, "logo.svg")
-	gitCommit(dir, "logo.svg")
-	setFileContent(dir, "logo.svg", "Content")
-	// When
-	changes := services.ChangedFilesSinceRemoteCommit(dir, "")
-	// Then
-	i := is.New(t)
-	i.True(len(changes) == 1)
-	i.Equal(services.GitStatusModified, changes[0].UnstagedStatus)
-}
-
-func Test_status_unstaged_deleted(t *testing.T) {
-	// Given
-	dir := initTestGit()
-	touchFile(dir, "logo.svg")
-	setFileContent(dir, "logo.svg", "Content")
-	gitAdd(dir, "logo.svg")
-	gitCommit(dir, "logo.svg")
-	deleteFile(dir, "logo.svg")
-	// When
-	changes := services.ChangedFilesSinceRemoteCommit(dir, "")
-	// Then
-	i := is.New(t)
-	i.True(len(changes) == 1)
-	i.Equal(services.GitStatusDeleted, changes[0].UnstagedStatus)
-}
-
 func Test_status_staged_added(t *testing.T) {
 	// Given
 	dir := initTestGit()
@@ -145,7 +102,6 @@ func Test_status_staged_added(t *testing.T) {
 	// Then
 	i := is.New(t)
 	i.True(len(changes) == 1)
-	i.Equal(services.GitStatusUnchanged, changes[0].UnstagedStatus)
 	i.Equal(services.GitStatusAdded, changes[0].Status)
 }
 
@@ -162,7 +118,6 @@ func Test_status_staged_modified(t *testing.T) {
 	// Then
 	i := is.New(t)
 	i.True(len(changes) == 1)
-	i.Equal(services.GitStatusUnchanged, changes[0].UnstagedStatus)
 	i.Equal(services.GitStatusModified, changes[0].Status)
 }
 
@@ -180,7 +135,6 @@ func Test_status_staged_deleted(t *testing.T) {
 	// Then
 	i := is.New(t)
 	i.True(len(changes) == 1)
-	i.Equal(services.GitStatusUnchanged, changes[0].UnstagedStatus)
 	i.Equal(services.GitStatusDeleted, changes[0].Status)
 }
 
@@ -202,10 +156,7 @@ func Test_status_staged_renamed(t *testing.T) {
 	i := is.New(t)
 	i.True(len(changes) == 1)
 	i.Equal("logo2.svg", changes[0].Path)
-	i.Equal("logo1.svg", changes[0].FromPath)
-	i.Equal(services.GitStatusUnchanged, changes[0].UnstagedStatus)
 	i.Equal(services.GitStatusRenamed, changes[0].Status)
-	i.Equal(100, changes[0].Score)
 }
 
 func Test_status_staged_renamed_with_rate(t *testing.T) {
@@ -226,8 +177,5 @@ func Test_status_staged_renamed_with_rate(t *testing.T) {
 	i := is.New(t)
 	i.True(len(changes) == 1)
 	i.Equal("logo2.svg", changes[0].Path)
-	i.Equal("logo1.svg", changes[0].FromPath)
-	i.Equal(services.GitStatusUnchanged, changes[0].UnstagedStatus)
 	i.Equal(services.GitStatusRenamed, changes[0].Status)
-	i.Equal(92, changes[0].Score)
 }
