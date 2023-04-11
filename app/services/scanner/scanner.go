@@ -46,8 +46,8 @@ func (w Scanner) addRecursive(watcher *fsnotify.Watcher, dir string) {
 		if w.Verbose {
 			println("Watch directory: " + walkPath)
 		}
-		if err != nil {
-			return err
+		if services.GitIgnored(w.Root, walkPath) {
+			return nil
 		}
 		err = watcher.Add(walkPath)
 		if err != nil {

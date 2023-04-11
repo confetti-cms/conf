@@ -4,6 +4,7 @@ import (
 	"github.com/schollz/progressbar/v3"
 	"io"
 	"net/http"
+	"os"
 	"src/config"
 	"sync"
 )
@@ -17,10 +18,20 @@ type PatchBody struct {
 // WaitGroup is used to wait for the program to finish goroutines.
 var wg sync.WaitGroup
 
+const maxChanges = 100
+
 func PatchDir(root string, remoteCommit string, writer io.Writer, verbose bool) {
 	// Get patches since latest remote commits
 	changes := ChangedFilesSinceRemoteCommit(root, remoteCommit)
 	changes = IgnoreHidden(changes)
+	// Do not allow too many changes
+	if len(changes) > maxChanges {
+		_, err := writer.Write([]byte("Too many changes. Please commit and push your changes before running this command."))
+		if err != nil {
+			panic(err)
+		}
+		os.Exit(1)
+	}
 	// Send patches since latest remote commits
 	bar := getBar(len(changes)*2, "Sync local changes with Confetti", writer, verbose)
 	wg.Add(len(changes))

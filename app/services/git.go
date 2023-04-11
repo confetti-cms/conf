@@ -17,6 +17,19 @@ func GitCommit(path string) (string, error) {
 	return RunCommand(fmt.Sprintf(`git commit -m "Message" "%s"`, path))
 }
 
+func GitIgnored(root, dir string) bool {
+	if dir == root {
+		return false
+	}
+	dir = strings.TrimPrefix(dir, root + "/")
+	out, _ := RunCommand(fmt.Sprintf(`cd %s && git check-ignore %s`, root, dir))
+	// Ignore the error (exit status 1)
+	if out == "" {
+		return false
+	}
+	return true
+}
+
 func GitRemoteCommit(dir string) string {
 	raw, err := RunCommand("cd " + dir + " && git for-each-ref refs/remotes/origin --count 1 --format \"%(objectname)\"")
 	if err != nil {
