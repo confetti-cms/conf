@@ -43,11 +43,11 @@ func (w Scanner) addRecursive(watcher *fsnotify.Watcher, dir string) {
 		if !d.IsDir() {
 			return err
 		}
-		if w.Verbose {
-			println("Watch directory: " + walkPath)
-		}
 		if services.GitIgnored(w.Root, walkPath) {
 			return nil
+		}
+		if w.Verbose {
+			println("Watch directory: " + walkPath)
 		}
 		err = watcher.Add(walkPath)
 		if err != nil {
@@ -106,6 +106,9 @@ func (w Scanner) startListening(watcher *fsnotify.Watcher) {
 				continue
 			}
 			if fileInfo.IsDir() {
+				if services.GitIgnored(w.Root, event.Name) {
+					continue
+				}
 				if w.Verbose {
 					println("Patch and watch new dir: " + event.Name)
 				}
