@@ -4,7 +4,7 @@ import (
 	"log"
 	"src/app/services"
 	"src/app/services/scanner"
-	"strings"
+	"src/config"
 
 	"github.com/confetti-framework/framework/inter"
 )
@@ -49,10 +49,8 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 		log.Fatal(err)
 	}
 	c.Line("")
-	// Guess the domain name (fake for now)
-	pathDirs := strings.Split(root, "/")
-	c.Info("Website: https://4s89fhw0.%s.nl", pathDirs[len(pathDirs)-1])
-	c.Info("Admin:   https://admin.4s89fhw0.%s.nl", pathDirs[len(pathDirs)-1])
+	c.Info("Website: http://%s", config.App.Host)
+	c.Info("Admin:   http://admin.%s", config.App.Host)
 	// Scan and watch next changes
 	scanner.Scanner{
 		Verbose:      t.Verbose,
