@@ -50,7 +50,7 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	}
 	c.Line("")
 	c.Info("Website: http://%s", config.App.Host)
-	c.Info("Admin:   http://admin.%s", config.App.Host)
+	c.Info("Admin:   http://%s", config.App.Host + "/admin")
 	// Scan and watch next changes
 	scanner.Scanner{
 		Verbose:      t.Verbose,

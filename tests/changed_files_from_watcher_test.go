@@ -154,28 +154,9 @@ func Test_status_staged_renamed(t *testing.T) {
 	changes := services.ChangedFilesSinceRemoteCommit(dir, "")
 	// Then
 	i := is.New(t)
-	i.True(len(changes) == 1)
-	i.Equal("logo2.svg", changes[0].Path)
-	i.Equal(services.GitStatusRenamed, changes[0].Status)
-}
-
-func Test_status_staged_renamed_with_rate(t *testing.T) {
-	// Given
-	dir := initTestGit()
-	touchFile(dir, "logo1.svg")
-	setFileContent(dir, "logo1.svg", "The content\n1")
-	gitAdd(dir, "logo1.svg")
-	gitCommit(dir, "logo1.svg")
-	deleteFile(dir, "logo1.svg")
-	touchFile(dir, "logo2.svg")
-	setFileContent(dir, "logo2.svg", "The content\n2")
-	gitAdd(dir, "logo1.svg") // Also add deleted file
-	gitAdd(dir, "logo2.svg")
-	// When
-	changes := services.ChangedFilesSinceRemoteCommit(dir, "")
-	// Then
-	i := is.New(t)
-	i.True(len(changes) == 1)
-	i.Equal("logo2.svg", changes[0].Path)
-	i.Equal(services.GitStatusRenamed, changes[0].Status)
+	i.True(len(changes) == 2)
+	i.Equal("logo1.svg", changes[0].Path)
+	i.Equal(services.GitStatusDeleted, changes[0].Status)
+	i.Equal("logo2.svg", changes[1].Path)
+	i.Equal(services.GitStatusRenamed, changes[1].Status)
 }

@@ -11,25 +11,28 @@ import (
 type Status string
 
 const rPath = `(?P<path>[-_/0-9A-z.]+)`
-const rFromPath = `(?P<from_path>[-_/0-9A-z.]+)`
+const rToPath = `(?P<to_path>[-_/0-9A-z.]*)`
 
 const (
-	GitStatusUnchanged Status = "."
-	GitStatusUntracked Status = "?"
-	GitStatusAdded     Status = "A"
-	GitStatusModified  Status = "M"
-	GitStatusDeleted   Status = "D"
-	GitStatusRenamed   Status = "R"
+	GitStatusUnchanged  Status = "."
+	GitStatusUntracked  Status = "?"
+	GitStatusAdded      Status = "A"
+	GitStatusCopy       Status = "C"
+	GitStatusDeleted    Status = "D"
+	GitStatusModified   Status = "M"
+	GitStatusRenamed    Status = "R"
+	GitStatusChangeType Status = "T"
+	GitStatusUnmerged   Status = "U"
 )
 
 type GitFileChange struct {
-	Status         Status
-	Path           string
+	Status Status
+	Path   string
 }
 
 func ChangedFilesSinceRemoteCommit(dir, remoteCommit string) []GitFileChange {
 	// Get all changes from git status in plain text
-	st := fmt.Sprintf("cd %s && git diff %s --name-status", dir, remoteCommit)
+	st := fmt.Sprintf("cd %s && git diff %s --cached --name-status", dir, remoteCommit)
 	raw, err := RunCommand(st)
 	if err != nil {
 		println("Err: from command: " + st)
@@ -90,18 +93,24 @@ func fileWithoutRoot(path, root string) string {
 
 // https://git-scm.com/docs/git-status#_stash_information
 func getOrdinaryChanges(rawStatuses []string) []GitFileChange {
-	compiler := regexp.MustCompile(`^(?P<status>[AMD\.])\s+` + rPath + `$`)
-
 	fileChanges := []GitFileChange{}
-	for _, status := range rawStatuses {
-		match, found := parseByRegex(status, compiler)
+	compiler := regexp.MustCompile(`^(?P<status>[ACDMTUXR\.])[\s\d]+\s` + rPath + `\s*` + rToPath+ `$`)
+	for _, rawStatus := range rawStatuses {
+		match, found := parseByRegex(rawStatus, compiler)
 		if !found {
 			continue
 		}
+		status := Status(match["status"])
 		fileChanges = append(fileChanges, GitFileChange{
-			Status: Status(match["status"]),
+			Status: GitStatusDeleted,
 			Path:   match["path"],
 		})
+		if status == GitStatusRenamed {
+			fileChanges = append(fileChanges, GitFileChange{
+				Status: status,
+				Path:   match["to_path"],
+			})
+		}
 	}
 
 	return fileChanges
