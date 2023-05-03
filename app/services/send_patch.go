@@ -26,7 +26,7 @@ func PatchDir(root string, remoteCommit string, writer io.Writer, verbose bool) 
 	changes = IgnoreHidden(changes)
 	// Do not allow too many changes
 	if len(changes) > maxChanges {
-		_, err := writer.Write([]byte("Too many changes. Please commit and push your changes before running this command."))
+		_, err := writer.Write([]byte("Too many changes. Use .gitignore to ignore libraries or commit and push your changes before running this command."))
 		if err != nil {
 			panic(err)
 		}

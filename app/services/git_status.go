@@ -31,6 +31,7 @@ type GitFileChange struct {
 }
 
 func ChangedFilesSinceRemoteCommit(dir, remoteCommit string) []GitFileChange {
+	changes := []GitFileChange{}
 	// Get all changes from git status in plain text
 	cm := fmt.Sprintf("cd %s && git diff %s --name-status", dir, remoteCommit)
 	raw, err := RunCommand(cm)
@@ -40,15 +41,17 @@ func ChangedFilesSinceRemoteCommit(dir, remoteCommit string) []GitFileChange {
 	}
 	rawStatuses := strings.Split(strings.Trim(raw, "\n"), "\n")
 	// Staged files
-	cm = fmt.Sprintf("cd %s && git diff %s --name-status --staged", dir, remoteCommit)
-	raw, err = RunCommand(cm)
-	if err != nil {
-		println("Err: from command: " + cm)
-		log.Fatal(err)
+	if remoteCommit == "" {
+		cm = fmt.Sprintf("cd %s && git diff --name-status --staged", dir)
+		raw, err = RunCommand(cm)
+		if err != nil {
+			println("Err: from command: " + cm)
+			log.Fatal(err)
+		}
+		result := strings.Split(strings.Trim(raw, "\n"), "\n")
+		rawStatuses = append(rawStatuses, result...)
 	}
-	result := strings.Split(strings.Trim(raw, "\n"), "\n")
-	rawStatuses = append(rawStatuses, result...)
-	changes := getOrdinaryChanges(rawStatuses)
+	changes = getOrdinaryChanges(rawStatuses)
 	// Get all untracked (new) files
 	cm = fmt.Sprintf("cd %s && git ls-files --others --exclude-standard", dir)
 	raw, err = RunCommand(cm)
@@ -119,8 +122,6 @@ func getOrdinaryChanges(rawStatuses []string) []GitFileChange {
 			continue
 		}
 		status := Status(match["status"])
-		println("status")
-		println(status)
 		if status == GitStatusRenamed {
 			fileChanges = append(fileChanges, GitFileChange{
 				Status: GitStatusDeleted,
