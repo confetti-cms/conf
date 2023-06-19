@@ -1,6 +1,7 @@
 package services
 
 import (
+	"github.com/confetti-framework/framework/inter"
 	"net/http"
 	"src/config"
 )
@@ -10,8 +11,8 @@ type CheckoutBody struct {
 	Reset  bool   `json:"reset"`
 }
 
-func SendCheckout(requestBody CheckoutBody) error {
+func SendCheckout(cli inter.Cli, requestBody CheckoutBody) error {
 	host := config.App.Host
-	_, err := Send("http://api." + host + "/parser/checkout", requestBody, http.MethodPut)
+	_, err := Send(cli, "http://api." + host + "/parser/checkout", requestBody, http.MethodPut)
     return err
 }

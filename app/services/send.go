@@ -4,13 +4,19 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/confetti-framework/errors"
+	"github.com/confetti-framework/framework/inter"
 	"github.com/spf13/cast"
 	"io/ioutil"
 	"net/http"
+	"src/app/services/auth"
 	"time"
 )
 
-func Send(url string, body any, method string) (string, error) {
+func Send(cli inter.Cli, url string, body any, method string) (string, error) {
+	token, err := auth.GetAccessToken(cli)
+	if err != nil {
+		return "", err
+	}
 	payloadB, err := json.Marshal(body)
 	if err != nil {
 		return "", err
@@ -24,6 +30,7 @@ func Send(url string, body any, method string) (string, error) {
 	}
 	req.Header.Add("Accept-Language", "application/json")
 	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Authorization", "Bearer " + token)
 	// Do request
 	res, err := client.Do(req)
 	if err != nil {

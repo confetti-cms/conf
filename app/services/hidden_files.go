@@ -3,6 +3,7 @@ package services
 import (
 	"encoding/base64"
 	"encoding/json"
+	"github.com/confetti-framework/framework/inter"
 	"net/http"
 	"os"
 	"path"
@@ -22,10 +23,10 @@ func IsHiddenFileGenerator(file string) bool {
 	return strings.HasSuffix(file, ComponentConfigSuffix) || strings.HasSuffix(file, ComponentClassSuffix)
 }
 
-func FetchHiddenFiles(root string, verbose bool) error {
+func FetchHiddenFiles(cli inter.Cli, root string, verbose bool) error {
 	// Get content of component
 	host := config.App.Host
-	body, err := Send("http://api." + host + "/parser/source/components", nil, http.MethodGet)
+	body, err := Send(cli, "http://api." + host + "/parser/source/components", nil, http.MethodGet)
 	if err != nil {
 		return err
 	}

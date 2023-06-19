@@ -11,5 +11,6 @@ package config
 */
 var Index = map[string]interface{}{
 	"App": App,
+	"Auth0": Auth0,
 	"Embed": Embed,
 }

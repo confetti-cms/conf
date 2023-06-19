@@ -31,33 +31,34 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	c.Info("Confetti watch")
 	// Get commit of the remote repository
 	remoteCommit := services.GitRemoteCommit(root)
-	c.Line("Sync...")
 	if t.Reset {
 		c.Info("Reset all components")
 	}
-	err := services.SendCheckout(services.CheckoutBody{
-		Commit: remoteCommit,
-		Reset:  t.Reset,
-	})
+	err := services.SendCheckout(
+		c,
+		services.CheckoutBody{
+			Commit: remoteCommit,
+			Reset:  t.Reset,
+		})
 	if err != nil {
 		log.Fatal(err)
 	}
-	services.PatchDir(root, remoteCommit, c.Writer(), t.Verbose)
+	services.PatchDir(c, root, remoteCommit, c.Writer(), t.Verbose)
 	// Get the standard hidden files
-	err = services.FetchHiddenFiles(root, t.Verbose)
+	err = services.FetchHiddenFiles(c, root, t.Verbose)
 	if err != nil {
 		log.Fatal(err)
 	}
 	c.Line("")
 	c.Info("Website: http://%s", config.App.Host)
-	c.Info("Admin:   http://%s", config.App.Host + "/admin")
+	c.Info("Admin:   http://%s", config.App.Host+"/admin")
 	// Scan and watch next changes
 	scanner.Scanner{
 		Verbose:      t.Verbose,
 		RemoteCommit: remoteCommit,
 		Root:         root,
 		Writer:       c.Writer(),
-	}.Watch("")
+	}.Watch(c, "")
 	// The watch is preventing the code from ever getting here
 	return inter.Success
 }
