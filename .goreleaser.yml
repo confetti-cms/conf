@@ -23,7 +23,7 @@ brews:
     homepage: "https://confetti-cms.com"
     tap:
       owner: confetti-cms
-      name: homebrew-confetti
+      name: homebrew-client
     commit_author:
       name: Reindert Vetter
       email: reindertvetter+brew@gmail.com
