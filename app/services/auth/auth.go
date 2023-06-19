@@ -120,7 +120,7 @@ func getTokenByDeviceCode(cli inter.Cli, deviceCode string) (*token, error) {
 		return getTokenByDeviceCode(cli, deviceCode)
 	}
 	fmt.Printf("\r")
-	cli.Info("You have successfully logged in\n")
+	cli.Info("You have successfully logged in")
 	
 	content := &token{}
 
