@@ -1,7 +1,9 @@
 package commands
 
 import (
-	"log"
+	"github.com/confetti-framework/errors"
+	"os"
+	"path/filepath"
 	"src/app/services"
 	"src/app/services/scanner"
 	"src/config"
@@ -10,7 +12,7 @@ import (
 )
 
 type Watch struct {
-	Directory string `short:"p" flag:"path" description:"Root directory of the Git repository" required:"true"`
+	Directory string `short:"p" flag:"path" description:"Root directory of the Git repository"`
 	Verbose   bool   `short:"v" flag:"verbose" description:"Show events"`
 	Reset     bool   `short:"r" flag:"reset" description:"All files are parsed again"`
 }
@@ -24,7 +26,11 @@ func (t Watch) Description() string {
 }
 
 func (t Watch) Handle(c inter.Cli) inter.ExitCode {
-	root := t.Directory
+	root, err := t.getDirectoryOrCurrent(c)
+	if err != nil {
+		c.Error(err.Error())
+		return inter.Failure
+	}
 	if t.Verbose {
 		c.Info("Read directory: %s", root)
 	}
@@ -34,20 +40,22 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	if t.Reset {
 		c.Info("Reset all components")
 	}
-	err := services.SendCheckout(
+	err = services.SendCheckout(
 		c,
 		services.CheckoutBody{
 			Commit: remoteCommit,
 			Reset:  t.Reset,
 		})
 	if err != nil {
-		log.Fatal(err)
+		c.Error(err.Error())
+		return inter.Failure
 	}
 	services.PatchDir(c, root, remoteCommit, c.Writer(), t.Verbose)
 	// Get the standard hidden files
 	err = services.FetchHiddenFiles(c, root, t.Verbose)
 	if err != nil {
-		log.Fatal(err)
+		c.Error(err.Error())
+		return inter.Failure
 	}
 	c.Line("")
 	c.Info("Website: http://%s", config.App.Host)
@@ -61,4 +69,21 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	}.Watch(c, "")
 	// The watch is preventing the code from ever getting here
 	return inter.Success
+}
+
+func (t Watch) getDirectoryOrCurrent(c inter.Cli) (string, error) {
+	if t.Directory != "" {
+		if _, err := os.Stat(filepath.Join(t.Directory, ".git")); os.IsNotExist(err) {
+			return "", errors.New("The specified directory is incorrect. Please ensure that the given .")
+		}
+		return t.Directory, nil
+	}
+	path, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+	if _, err := os.Stat(filepath.Join(path, ".git")); os.IsNotExist(err) {
+		return "", errors.New("You are not running this command in the correct location. Please ensure that you are running the command in the correct Git repository.")
+	}
+	return path, nil
 }
