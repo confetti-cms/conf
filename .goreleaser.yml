@@ -8,8 +8,8 @@ builds:
       - arm64
     env:
       - CGO_ENABLED=0
-    flags:
-      - -mod=vendor
+#    flags:
+#      - -mod=vendor
 
 release:
   prerelease: auto
@@ -19,8 +19,8 @@ universal_binaries:
 
 brews:
   -
-    name: mediumautopost
-    homepage: "https://github.com/askcloudarchitech/mediumautopost"
+    name: confetti
+    homepage: "https://confetti-cms.com"
     tap:
       owner: confetti-cms
       name: homebrew-confetti
