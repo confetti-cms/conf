@@ -1,5 +1,5 @@
 builds:
-  - binary: mediumautopost
+  - binary: confetti
     goos:
       - darwin
       - linux
