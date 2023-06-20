@@ -28,7 +28,7 @@ brews:
       name: Reindert Vetter
       email: reindertvetter+brew@gmail.com
     install: |
-      bin.install "some_other_name"
+      bin.install "confetti"
 
 checksum:
   name_template: 'checksums.txt'
