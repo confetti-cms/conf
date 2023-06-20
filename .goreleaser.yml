@@ -27,6 +27,8 @@ brews:
     commit_author:
       name: Reindert Vetter
       email: reindertvetter+brew@gmail.com
+    install: |
+      bin.install "some_other_name"
 
 checksum:
   name_template: 'checksums.txt'
