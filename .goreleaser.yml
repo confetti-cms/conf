@@ -29,7 +29,7 @@ brews:
       email: reindertvetter+brew@gmail.com
     install: |
       binary: confetti
-#      bin.install "confetti"
+      bin.install "confetti"
 
 checksum:
   name_template: 'checksums.txt'
