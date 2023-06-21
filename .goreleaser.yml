@@ -26,7 +26,12 @@ brews:
       name: homebrew-confetti
     commit_author:
       name: Reindert Vetter
-      email: reindertvetter+brew@gmail.com
+      email: reindertvetter+brew@gmail.comcom
+    install: |
+      main: confetti
+      id: confetti
+      binary: confetti
+      bin.install "confetti"
 
 checksum:
   name_template: 'checksums.txt'
