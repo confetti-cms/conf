@@ -10,7 +10,7 @@ builds:
       - arm64
     env:
       - CGO_ENABLED=0
-    flags:
+#    flags:
 #      - -mod=vendor
 
 release:
