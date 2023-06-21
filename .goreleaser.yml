@@ -27,7 +27,8 @@ brews:
     commit_author:
       name: Reindert Vetter
       email: reindertvetter+brew@gmail.com
-#    install: |
+    install: |
+      binary: confetti
 #      bin.install "confetti"
 
 checksum:
