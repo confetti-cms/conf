@@ -1,5 +1,7 @@
 builds:
   - binary: confetti
+    main: confetti
+    id: confetti
     goos:
       - darwin
       - linux
