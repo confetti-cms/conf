@@ -28,9 +28,6 @@ brews:
       name: Reindert Vetter
       email: reindertvetter+brew@gmail.com
     install: |
-      main: confetti
-      id: confetti
-      binary: confetti
       bin.install "confetti"
 
 checksum:
