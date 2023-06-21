@@ -22,7 +22,7 @@ brews:
     name: confetti
     homepage: "https://confetti-cms.com"
     tap:
-      owner: confetti-cms
+      owner: client
       name: homebrew-client
     commit_author:
       name: Reindert Vetter
