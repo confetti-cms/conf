@@ -44,10 +44,9 @@ func FetchNewAccessToken(cli inter.Cli) error {
 }
 
 func getRefreshToken(cli inter.Cli) (*token, error) {
-
 	url := "https://" + config.Auth0.Domain + "/oauth/device/code"
 
-	payload := strings.NewReader("client_id=" + config.Auth0.ClientId + "&scope=offline_access&audience=" + config.Auth0.Audience)
+	payload := strings.NewReader("client_id=" + config.Auth0.ClientId + "&scope=offline_access openid&audience=" + config.Auth0.Audience)
 
 	req, err := http.NewRequest("POST", url, payload)
 	if err != nil {

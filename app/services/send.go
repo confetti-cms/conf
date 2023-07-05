@@ -28,7 +28,8 @@ func Send(cli inter.Cli, url string, body any, method string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	req.Header.Add("Accept-Language", "application/json")
+
+	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Authorization", "Bearer " + token)
 	// Do request
