@@ -1,14 +1,15 @@
 package scanner
 
 import (
-	"github.com/confetti-framework/framework/inter"
-	"github.com/fsnotify/fsnotify"
 	"io"
 	"log"
 	"os"
 	"path/filepath"
 	"src/app/services"
 	"strings"
+
+	"github.com/confetti-framework/framework/inter"
+	"github.com/fsnotify/fsnotify"
 )
 
 type Scanner struct {
@@ -18,7 +19,7 @@ type Scanner struct {
 	Writer       io.Writer
 }
 
-func (w Scanner) Watch(cli inter.Cli, dir string) {
+func (w Scanner) Watch(cli inter.Cli, env services.Environment, dir string) {
 	if dir == "" {
 		dir = w.Root
 	}
@@ -29,7 +30,7 @@ func (w Scanner) Watch(cli inter.Cli, dir string) {
 	}
 	defer watcher.Close()
 	// Start listening for events.
-	go w.startListening(cli, watcher)
+	go w.startListening(cli, watcher, env)
 	// Add all directories to the watcher
 	w.addRecursive(watcher, dir)
 	// Block main goroutine forever.
@@ -61,7 +62,7 @@ func (w Scanner) addRecursive(watcher *fsnotify.Watcher, dir string) {
 	}
 }
 
-func (w Scanner) startListening(cli inter.Cli, watcher *fsnotify.Watcher) {
+func (w Scanner) startListening(cli inter.Cli, watcher *fsnotify.Watcher, env services.Environment) {
 	for {
 		select {
 		case event, ok := <-watcher.Events:
@@ -87,13 +88,13 @@ func (w Scanner) startListening(cli inter.Cli, watcher *fsnotify.Watcher) {
 				if w.Verbose {
 					println("Send delete Source: " + file)
 				}
-				err := services.SendDeleteSource(cli, file)
+				err := services.SendDeleteSource(cli, env, file)
 				if err != nil {
 					println("Err: SendDeleteSource:")
 					println(err.Error())
 				}
 				if services.IsHiddenFileGenerator(file) {
-					err = services.FetchHiddenFiles(cli, w.Root, w.Verbose)
+					err = services.FetchHiddenFiles(cli, env, w.Root, w.Verbose)
 					if err != nil {
 						log.Fatal(err)
 					}
@@ -113,14 +114,14 @@ func (w Scanner) startListening(cli inter.Cli, watcher *fsnotify.Watcher) {
 				if w.Verbose {
 					println("Patch and watch new dir: " + event.Name)
 				}
-				services.PatchDir(cli, w.Root, w.RemoteCommit, w.Writer, w.Verbose)
+				services.PatchDir(cli, env, w.Root, w.RemoteCommit, w.Writer, w.Verbose)
 				w.addRecursive(watcher, event.Name)
 				continue
 			}
 			patch := services.GetPatchSinceCommit(w.RemoteCommit, w.Root, file, w.Verbose)
-            services.SendPatch(cli, file, patch, w.Verbose)
+			services.SendPatch(cli, env, file, patch, w.Verbose)
 			if services.IsHiddenFileGenerator(file) {
-				err = services.FetchHiddenFiles(cli, w.Root, w.Verbose)
+				err = services.FetchHiddenFiles(cli, env, w.Root, w.Verbose)
 				if err != nil {
 					log.Fatal(err)
 				}

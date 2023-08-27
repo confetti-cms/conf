@@ -3,12 +3,12 @@ package services
 import (
 	"encoding/base64"
 	"encoding/json"
-	"github.com/confetti-framework/framework/inter"
 	"net/http"
 	"os"
 	"path"
-	"src/config"
 	"strings"
+
+	"github.com/confetti-framework/framework/inter"
 )
 
 const hiddenDir = ".confetti"
@@ -23,10 +23,10 @@ func IsHiddenFileGenerator(file string) bool {
 	return strings.HasSuffix(file, ComponentConfigSuffix) || strings.HasSuffix(file, ComponentClassSuffix)
 }
 
-func FetchHiddenFiles(cli inter.Cli, root string, verbose bool) error {
+func FetchHiddenFiles(cli inter.Cli, env Environment, root string, verbose bool) error {
 	// Get content of component
-	host := config.App.Host
-	body, err := Send(cli, "http://api." + host + "/parser/source/components", nil, http.MethodGet)
+	url := env.GetServiceUrl("confetti-cms/parser")
+	body, err := Send(cli, url+"/source/components", nil, http.MethodGet)
 	if err != nil {
 		return err
 	}

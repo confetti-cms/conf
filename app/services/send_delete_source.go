@@ -1,13 +1,13 @@
 package services
 
 import (
-	"github.com/confetti-framework/framework/inter"
 	"net/http"
-	"src/config"
+
+	"github.com/confetti-framework/framework/inter"
 )
 
-func SendDeleteSource(cli inter.Cli, path string) error {
-	host := config.App.Host
-	_, err := Send(cli, "http://api." + host + "/parser/source?path="+path, "", http.MethodDelete)
+func SendDeleteSource(cli inter.Cli, env Environment, path string) error {
+	url := env.GetServiceUrl("confetti-cms/parser")
+	_, err := Send(cli, url+"/source?path="+path, "", http.MethodDelete)
 	return err
 }

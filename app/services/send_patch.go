@@ -1,13 +1,13 @@
 package services
 
 import (
-	"github.com/confetti-framework/framework/inter"
-	"github.com/schollz/progressbar/v3"
 	"io"
 	"net/http"
 	"os"
-	"src/config"
 	"sync"
+
+	"github.com/confetti-framework/framework/inter"
+	"github.com/schollz/progressbar/v3"
 )
 
 type PatchBody struct {
@@ -21,7 +21,7 @@ var wg sync.WaitGroup
 
 const maxChanges = 100
 
-func PatchDir(cli inter.Cli, root string, remoteCommit string, writer io.Writer, verbose bool) {
+func PatchDir(cli inter.Cli, env Environment, root string, remoteCommit string, writer io.Writer, verbose bool) {
 	// Get patches since latest remote commits
 	changes := ChangedFilesSinceRemoteCommit(root, remoteCommit)
 	changes = IgnoreHidden(changes)
@@ -40,7 +40,7 @@ func PatchDir(cli inter.Cli, root string, remoteCommit string, writer io.Writer,
 		change := change
 		go func() {
 			defer wg.Done()
-			removed := RemoveIfDeleted(cli, change, root)
+			removed := RemoveIfDeleted(cli, env, change, root)
 			if removed {
 				if verbose {
 					println("File removed: " + change.Path)
@@ -53,7 +53,7 @@ func PatchDir(cli inter.Cli, root string, remoteCommit string, writer io.Writer,
 			}
 			patch := GetPatchSinceCommit(remoteCommit, root, change.Path, verbose)
 			_ = bar.Add(1)
-			SendPatch(cli, change.Path, patch, verbose)
+			SendPatch(cli, env, change.Path, patch, verbose)
 			_ = bar.Add(1)
 		}()
 	}
@@ -61,8 +61,8 @@ func PatchDir(cli inter.Cli, root string, remoteCommit string, writer io.Writer,
 	wg.Wait()
 }
 
-func SendPatch(cli inter.Cli, path, patch string, verbose bool) {
-	err := SendPatchE(cli, path, patch, verbose)
+func SendPatch(cli inter.Cli, env Environment, path, patch string, verbose bool) {
+	err := SendPatchE(cli, env, path, patch, verbose)
 	if err != nil {
 		println("Err SendPatchE:")
 		println(err.Error())
@@ -73,7 +73,7 @@ func SendPatch(cli inter.Cli, path, patch string, verbose bool) {
 	}
 }
 
-func SendPatchE(cli inter.Cli, path, patch string, verbose bool) error {
+func SendPatchE(cli inter.Cli, env Environment, path, patch string, verbose bool) error {
 	if patch == "" {
 		if verbose {
 			println("Ignore (no change in patch): " + path)
@@ -87,9 +87,9 @@ func SendPatchE(cli inter.Cli, path, patch string, verbose bool) error {
 	if verbose {
 		println("Patch sending:", path)
 	}
-	host := config.App.Host
-	_, err := Send(cli, "http://api." + host + "/parser/source", body, http.MethodPatch)
-    return err
+	url := env.GetServiceUrl("confetti-cms/parser")
+	_, err := Send(cli, url+"/source", body, http.MethodPatch)
+	return err
 }
 
 func getBar(total int, description string, writer io.Writer, verbose bool) *progressbar.ProgressBar {
@@ -107,10 +107,10 @@ func getBar(total int, description string, writer io.Writer, verbose bool) *prog
 		progressbar.OptionSetWidth(30),
 		progressbar.OptionSetDescription(description),
 		progressbar.OptionSetTheme(progressbar.Theme{
-		Saucer:        "[green]=[reset]",
-		SaucerHead:    "[green]|[reset]",
-		SaucerPadding: "-",
-		BarStart:      "|",
-		BarEnd:        "|",
+			Saucer:        "[green]=[reset]",
+			SaucerHead:    "[green]|[reset]",
+			SaucerPadding: "-",
+			BarStart:      "|",
+			BarEnd:        "|",
 		}))
 }

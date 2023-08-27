@@ -9,8 +9,6 @@ import (
 
 var App = struct {
 	Name,
-	Host,
-	AssetUrl,
 	LineSeparator,
 	Key,
 	Env string
@@ -35,8 +33,6 @@ var App = struct {
 	   |
 	*/
 	Name: env.StringOr("APP_NAME", "Confetti"),
-
-	Host: env.String("APP_HOST"),
 
 	/*
 		|--------------------------------------------------------------------------

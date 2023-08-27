@@ -1,20 +1,21 @@
 package commands
 
 import (
-	"github.com/confetti-framework/errors"
 	"os"
 	"path/filepath"
 	"src/app/services"
 	"src/app/services/scanner"
-	"src/config"
+
+	"github.com/confetti-framework/errors"
 
 	"github.com/confetti-framework/framework/inter"
 )
 
 type Watch struct {
-	Directory string `short:"p" flag:"path" description:"Root directory of the Git repository"`
-	Verbose   bool   `short:"v" flag:"verbose" description:"Show events"`
-	Reset     bool   `short:"r" flag:"reset" description:"All files are parsed again"`
+	Directory   string `short:"p" flag:"path" description:"Root directory of the Git repository"`
+	Verbose     bool   `short:"v" flag:"verbose" description:"Show events"`
+	Reset       bool   `short:"r" flag:"reset" description:"All files are parsed again"`
+	Environment string `short:"e" flag:"env" description:"The environment key in the app_config.json5 file, default 'dev'"`
 }
 
 func (t Watch) Name() string {
@@ -32,9 +33,14 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 		return inter.Failure
 	}
 	if t.Verbose {
-		c.Info("Read directory: %s", root)
+		c.Info("Use directory: %s", root)
 	}
 	c.Info("Confetti watch")
+	env, err := services.GetEnvironmentByInput(c, root)
+	if err != nil {
+		c.Error(err.Error())
+		return inter.Failure
+	}
 	// Get commit of the remote repository
 	remoteCommit := services.GitRemoteCommit(root)
 	if t.Reset {
@@ -42,6 +48,7 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	}
 	err = services.SendCheckout(
 		c,
+		env,
 		services.CheckoutBody{
 			Commit: remoteCommit,
 			Reset:  t.Reset,
@@ -50,23 +57,25 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 		c.Error(err.Error())
 		return inter.Failure
 	}
-	services.PatchDir(c, root, remoteCommit, c.Writer(), t.Verbose)
+	services.PatchDir(c, env, root, remoteCommit, c.Writer(), t.Verbose)
 	// Get the standard hidden files
-	err = services.FetchHiddenFiles(c, root, t.Verbose)
+	err = services.FetchHiddenFiles(c, env, root, t.Verbose)
 	if err != nil {
 		c.Error(err.Error())
 		return inter.Failure
 	}
 	c.Line("")
-	c.Info("Website: http://%s", config.App.Host)
-	c.Info("Admin:   http://%s", config.App.Host+"/admin")
+	for _, host := range env.GetExplicitHosts() {
+		c.Info("Website: http://%s", host)
+		c.Info("Admin: http://%s%s", host, "/admin")
+	}
 	// Scan and watch next changes
 	scanner.Scanner{
 		Verbose:      t.Verbose,
 		RemoteCommit: remoteCommit,
 		Root:         root,
 		Writer:       c.Writer(),
-	}.Watch(c, "")
+	}.Watch(c, env, "")
 	// The watch is preventing the code from ever getting here
 	return inter.Success
 }

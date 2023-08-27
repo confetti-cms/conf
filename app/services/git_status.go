@@ -2,11 +2,12 @@ package services
 
 import (
 	"fmt"
-	"github.com/confetti-framework/framework/inter"
 	"log"
 	"os"
 	"regexp"
 	"strings"
+
+	"github.com/confetti-framework/framework/inter"
 )
 
 type Status string
@@ -93,7 +94,7 @@ func IgnoreFile(file string) bool {
 	return false
 }
 
-func RemoveIfDeleted(cli inter.Cli, change GitFileChange, root string) bool {
+func RemoveIfDeleted(cli inter.Cli, env Environment, change GitFileChange, root string) bool {
 	if change.Status != GitStatusDeleted {
 		return false
 	}
@@ -102,7 +103,7 @@ func RemoveIfDeleted(cli inter.Cli, change GitFileChange, root string) bool {
 		return false
 	}
 	file := fileWithoutRoot(change.Path, root)
-	err = SendDeleteSource(cli, file)
+	err = SendDeleteSource(cli, env, file)
 	if err != nil {
 		panic(err)
 	}
