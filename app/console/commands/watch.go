@@ -27,7 +27,7 @@ func (t Watch) Description() string {
 }
 
 func (t Watch) Handle(c inter.Cli) inter.ExitCode {
-	root, err := t.getDirectoryOrCurrent(c)
+	root, err := t.getDirectoryOrCurrent()
 	if err != nil {
 		c.Error(err.Error())
 		return inter.Failure
@@ -80,7 +80,7 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	return inter.Success
 }
 
-func (t Watch) getDirectoryOrCurrent(c inter.Cli) (string, error) {
+func (t Watch) getDirectoryOrCurrent() (string, error) {
 	if t.Directory != "" {
 		if _, err := os.Stat(filepath.Join(t.Directory, ".git")); os.IsNotExist(err) {
 			return "", errors.New("The specified directory is incorrect. Please ensure that the given directory is correct.")
