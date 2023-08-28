@@ -51,7 +51,7 @@ func PatchDir(cli inter.Cli, env Environment, root string, remoteCommit string, 
 			if verbose {
 				println("Patch file: " + change.Path)
 			}
-			patch := GetPatchSinceCommit(remoteCommit, root, change.Path, verbose)
+			patch := GetPatchSinceCommit(remoteCommit, root, change.Path, change.Status == GitStatusAdded, verbose)
 			_ = bar.Add(1)
 			SendPatch(cli, env, change.Path, patch, verbose)
 			_ = bar.Add(1)

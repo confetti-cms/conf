@@ -83,8 +83,7 @@ func (w Scanner) startListening(cli inter.Cli, watcher *fsnotify.Watcher, env se
 				log.Println("Modified file: ", event.Name, " Op:", event.Op)
 			}
 			// Removed (by removing or renaming)
-			if strings.Contains(event.Op.String(), fsnotify.Rename.String()) ||
-				strings.Contains(event.Op.String(), fsnotify.Remove.String()) {
+			if eventIs(event, fsnotify.Rename) || eventIs(event, fsnotify.Remove) {
 				if w.Verbose {
 					println("Send delete Source: " + file)
 				}
@@ -118,7 +117,7 @@ func (w Scanner) startListening(cli inter.Cli, watcher *fsnotify.Watcher, env se
 				w.addRecursive(watcher, event.Name)
 				continue
 			}
-			patch := services.GetPatchSinceCommit(w.RemoteCommit, w.Root, file, w.Verbose)
+			patch := services.GetPatchSinceCommit(w.RemoteCommit, w.Root, file, eventIs(event, fsnotify.Create), w.Verbose)
 			services.SendPatch(cli, env, file, patch, w.Verbose)
 			if services.IsHiddenFileGenerator(file) {
 				err = services.FetchHiddenFiles(cli, env, w.Root, w.Verbose)
@@ -134,6 +133,10 @@ func (w Scanner) startListening(cli inter.Cli, watcher *fsnotify.Watcher, env se
 			log.Println("error: ", err)
 		}
 	}
+}
+
+func eventIs(given fsnotify.Event, expect fsnotify.Op) bool {
+	return strings.Contains(given.Op.String(), expect.String()[1:])
 }
 
 func success(verbose bool) {
