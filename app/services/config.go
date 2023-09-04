@@ -18,9 +18,10 @@ type Hosts []string
 type Paths []string
 
 type ContainerConfig struct {
-	Name  string `json:"name"`
-	Hosts Hosts  `json:"hosts"`
-	Paths Paths  `json:"paths"`
+	Name             string `json:"name"`
+	Hosts            Hosts  `json:"hosts"`
+	Paths            Paths  `json:"paths"`
+	UserServiceInUri bool   `json:"user_service_in_uri"`
 }
 
 func (c *ContainerConfig) GetAllURLCombinations(defaultUri string) []string {
@@ -75,19 +76,36 @@ func (e Environment) GetExplicitHosts() []string {
 	return hosts
 }
 
-func (e Environment) GetServiceUrl(serviceName string) string {
-	_default := ContainerConfig{}
+func (e Environment) GetServiceUrl(service string) string {
+	match := ContainerConfig{}
+	// Set default
 	for _, container := range e.Containers {
-		if container.Name == serviceName {
-			host := container.Hosts[0]
-			return "http://" + host + "/" + serviceName
-		}
 		if container.Name == "" {
-			_default = container
+			match = container
 		}
 	}
-	host := _default.Hosts[0]
-	return "http://" + host + "/" + serviceName
+	// Find match
+	for _, container := range e.Containers {
+		if container.Name == service {
+			match = container
+		}
+	}
+	host := match.Hosts[0]
+	return "http://" + host + getUriByAlias(match, service)
+}
+
+func getUriByAlias(config ContainerConfig, service string) string {
+	uri := ""
+	if len(config.Paths) > 0 {
+		// For now, we only support 1 path max
+		uri += "/" + strings.TrimLeft(config.Paths[0], "/")
+	}
+	if config.UserServiceInUri {
+		// For now, we only support 1 suffix path max
+		uri += "/" + service
+	}
+
+	return strings.TrimRight(uri, "/")
 }
 
 type AppConfig struct {
