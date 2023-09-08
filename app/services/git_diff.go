@@ -23,14 +23,12 @@ func GetPatchSinceCommitE(commit, root, file string, isNew bool) (string, error)
 	if err != nil {
 		return "", err
 	}
-	// If no results; get untracked changes
 	if strings.Trim(out, "\n") != "" {
 		return out, err
 	}
-	if isNew {
-		st = fmt.Sprintf("cd %s && git diff -- /dev/null %s", root, file)
-		// Unknown way err is not nil
-		out, _ = RunCommand(st)
-	}
+	// If no results; get untracked changes
+	st = fmt.Sprintf("cd %s && git diff -- /dev/null %s", root, file)
+	// Unknown way err is not nil
+	out, _ = RunCommand(st)
 	return out, nil
 }
