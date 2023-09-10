@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -105,7 +106,10 @@ func RemoveIfDeleted(cli inter.Cli, env Environment, change GitFileChange, root 
 	file := fileWithoutRoot(change.Path, root)
 	err = SendDeleteSource(cli, env, file)
 	if err != nil {
-		panic(err)
+		cli.Error(err.Error())
+		if !errors.Is(err, UserError) {
+			log.Fatal(err)
+		}
 	}
 	return true
 }

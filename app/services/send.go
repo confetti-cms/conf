@@ -3,14 +3,18 @@ package services
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/confetti-framework/errors"
-	"github.com/confetti-framework/framework/inter"
-	"github.com/spf13/cast"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"src/app/services/auth"
 	"time"
+
+	"github.com/confetti-framework/errors"
+	"github.com/confetti-framework/framework/inter"
+	"github.com/spf13/cast"
 )
+
+var UserError = errors.New("something went wrong, you can probably adjust it yourself to fix it")
 
 func Send(cli inter.Cli, url string, body any, method string) (string, error) {
 	token, err := auth.GetAccessToken(cli)
@@ -31,7 +35,7 @@ func Send(cli inter.Cli, url string, body any, method string) (string, error) {
 
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Authorization", "Bearer " + token)
+	req.Header.Add("Authorization", "Bearer "+token)
 	// Do request
 	res, err := client.Do(req)
 	if err != nil {
@@ -45,11 +49,22 @@ func Send(cli inter.Cli, url string, body any, method string) (string, error) {
 		return "", err
 	}
 	if res.StatusCode > 299 {
-		return string(responseBody), errors.New(
+		if res.StatusCode == http.StatusBadRequest {
+			body := map[string]interface{}{}
+			err := json.Unmarshal(responseBody, &body)
+			if err != nil {
+				return "", fmt.Errorf("error unmarshalling response body: %w", err)
+			}
+			errs := body["errors"].([]any)
+			title := errs[0].(map[string]any)["title"].(string)
+			return string(responseBody), fmt.Errorf("%w: %s", UserError, title)
+		}
+		err := errors.New(
 			"error with status: " + cast.ToString(res.StatusCode) +
 				" with request: " + method + " " + url +
 				" and response: " + string(responseBody),
 		)
+		return string(responseBody), err
 	}
 	return string(responseBody), nil
 }

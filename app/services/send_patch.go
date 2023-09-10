@@ -1,7 +1,9 @@
 package services
 
 import (
+	"errors"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"sync"
@@ -64,8 +66,10 @@ func PatchDir(cli inter.Cli, env Environment, root string, remoteCommit string, 
 func SendPatch(cli inter.Cli, env Environment, path, patch string, verbose bool) {
 	err := SendPatchE(cli, env, path, patch, verbose)
 	if err != nil {
-		println("Err SendPatchE:")
-		println(err.Error())
+		cli.Error(err.Error())
+		if !errors.Is(err, UserError) {
+			log.Fatal(err)
+		}
 		return
 	}
 	if verbose {

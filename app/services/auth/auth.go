@@ -3,12 +3,13 @@ package auth
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/confetti-framework/framework/inter"
 	"io/ioutil"
 	"net/http"
 	"src/config"
 	"strings"
 	"time"
+
+	"github.com/confetti-framework/framework/inter"
 )
 
 type token struct {
@@ -67,7 +68,7 @@ func getRefreshToken(cli inter.Cli) (*token, error) {
 	}
 
 	content := struct {
-		Url string `json:"verification_uri_complete"`
+		Url        string `json:"verification_uri_complete"`
 		DeviceCode string `json:"device_code"`
 	}{}
 	err = json.Unmarshal(body, &content)
@@ -84,13 +85,15 @@ func getRefreshToken(cli inter.Cli) (*token, error) {
 	if err != nil {
 		return nil, err
 	}
+//	println("token.AccessToken:")
+//	println(token.AccessToken)
 	return token, nil
 }
 
 func getTokenByDeviceCode(cli inter.Cli, deviceCode string) (*token, error) {
 	url := "https://" + config.Auth0.Domain + "/oauth/token"
 
-	payload := strings.NewReader("grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Adevice_code&device_code="+ deviceCode +"&client_id=" + config.Auth0.ClientId)
+	payload := strings.NewReader("grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Adevice_code&device_code=" + deviceCode + "&client_id=" + config.Auth0.ClientId)
 
 	req, err := http.NewRequest("POST", url, payload)
 	if err != nil {
@@ -120,7 +123,7 @@ func getTokenByDeviceCode(cli inter.Cli, deviceCode string) (*token, error) {
 	}
 	fmt.Printf("\r")
 	cli.Info("You have successfully logged in")
-	
+
 	content := &token{}
 
 	err = json.Unmarshal(body, content)

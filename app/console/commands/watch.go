@@ -46,23 +46,24 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	if t.Reset {
 		c.Info("Reset all components")
 	}
-	err = services.SendCheckout(
-		c,
-		env,
-		services.CheckoutBody{
-			Commit: remoteCommit,
-			Reset:  t.Reset,
-		})
+	err = services.SendCheckout(c, env, services.CheckoutBody{
+		Commit: remoteCommit,
+		Reset:  t.Reset,
+	})
 	if err != nil {
 		c.Error(err.Error())
-		return inter.Failure
+		if !errors.Is(err, services.UserError) {
+			return inter.Failure
+		}
 	}
 	services.PatchDir(c, env, root, remoteCommit, c.Writer(), t.Verbose)
 	// Get the standard hidden files
 	err = services.FetchHiddenFiles(c, env, root, t.Verbose)
 	if err != nil {
 		c.Error(err.Error())
-		return inter.Failure
+		if !errors.Is(err, services.UserError) {
+			return inter.Failure
+		}
 	}
 	c.Line("")
 	for _, host := range env.GetExplicitHosts() {

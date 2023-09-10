@@ -1,6 +1,7 @@
 package scanner
 
 import (
+	"errors"
 	"io"
 	"log"
 	"os"
@@ -95,11 +96,15 @@ func (w Scanner) startListening(cli inter.Cli, watcher *fsnotify.Watcher, env se
 				if services.IsHiddenFileGenerator(file) {
 					err = services.FetchHiddenFiles(cli, env, w.Root, w.Verbose)
 					if err != nil {
-						log.Fatal(err)
+						cli.Error(err.Error())
+						if !errors.Is(err, services.UserError) {
+							log.Fatal(err)
+						}
 					}
 				}
 				continue
 			}
+			// Not removing
 			fileInfo, err := os.Stat(event.Name)
 			if err != nil {
 				println("Err: when check file for dir: " + err.Error())
@@ -122,7 +127,10 @@ func (w Scanner) startListening(cli inter.Cli, watcher *fsnotify.Watcher, env se
 			if services.IsHiddenFileGenerator(file) {
 				err = services.FetchHiddenFiles(cli, env, w.Root, w.Verbose)
 				if err != nil {
-					log.Fatal(err)
+					cli.Error(err.Error())
+					if !errors.Is(err, services.UserError) {
+						log.Fatal(err)
+					}
 				}
 			}
 			success(w.Verbose)
