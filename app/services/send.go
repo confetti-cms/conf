@@ -48,6 +48,19 @@ func Send(cli inter.Cli, url string, body any, method string) (string, error) {
 		println("error response: " + string(responseBody))
 		return "", err
 	}
+	if res.StatusCode == http.StatusForbidden {
+		fmt.Printf("\rSetting up development services. This usually takes 15 seconds")
+		time.Sleep(3 * time.Second)
+		retryResp, err := Send(cli, url, body, method)
+		return retryResp, err
+	}
+	if res.StatusCode == http.StatusBadGateway {
+		// Override previous message with spaces
+		fmt.Printf("\rService is almost available. We'll be done in 5 seconds       ")
+		time.Sleep(3 * time.Second)
+		retryResp, err := Send(cli, url, body, method)
+		return retryResp, err
+	}
 	if res.StatusCode > 299 {
 		if res.StatusCode == http.StatusBadRequest {
 			body := map[string]interface{}{}

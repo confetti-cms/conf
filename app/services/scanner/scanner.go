@@ -2,12 +2,14 @@ package scanner
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"os"
 	"path/filepath"
 	"src/app/services"
 	"strings"
+	"time"
 
 	"github.com/confetti-framework/framework/inter"
 	"github.com/fsnotify/fsnotify"
@@ -149,6 +151,7 @@ func eventIs(given fsnotify.Event, expect fsnotify.Op) bool {
 
 func success(verbose bool) {
 	if !verbose {
-		print(".")
+		// Override previous message with spaces
+		fmt.Printf("\rLatest sync: %s                              ", time.Now().Format("2006-01-02 15:04:05"))
 	}
 }

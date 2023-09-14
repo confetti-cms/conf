@@ -68,7 +68,7 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	c.Line("")
 	for _, host := range env.GetExplicitHosts() {
 		c.Info("Website: http://%s", host)
-		c.Info("Admin: http://%s%s", host, "/admin")
+		c.Info("Admin: http://%s%s\n", host, "/admin")
 	}
 	// Scan and watch next changes
 	scanner.Scanner{

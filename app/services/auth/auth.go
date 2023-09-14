@@ -113,7 +113,7 @@ func getTokenByDeviceCode(cli inter.Cli, deviceCode string) (*token, error) {
 		return nil, err
 	}
 
-	if res.StatusCode == 403 {
+	if res.StatusCode == http.StatusForbidden {
 		// Rate limit is 5 seconds
 		for i := 5; i >= 1; i-- {
 			fmt.Printf("\rRetry in%2d seconds ", i)
@@ -121,7 +121,9 @@ func getTokenByDeviceCode(cli inter.Cli, deviceCode string) (*token, error) {
 		}
 		return getTokenByDeviceCode(cli, deviceCode)
 	}
-	fmt.Printf("\r")
+
+	// Clean entire screen
+	print("\033[H\033[2J")
 	cli.Info("You have successfully logged in")
 
 	content := &token{}
