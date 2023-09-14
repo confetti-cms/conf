@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"src/app/services"
@@ -65,6 +66,8 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 			return inter.Failure
 		}
 	}
+	// remove loading bar
+	fmt.Printf("\r                                                                      ")
 	c.Line("")
 	for _, host := range env.GetExplicitHosts() {
 		c.Info("Website: http://%s", host)
