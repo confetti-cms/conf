@@ -23,7 +23,7 @@ func GetPatchSinceCommitE(commit, root, file string, isNew bool) (string, error)
 	if err != nil {
 		return "", err
 	}
-	if strings.Trim(out, "\n") != "" {
+	if strings.Trim(out, "\n") != "" || isNew == false {
 		return out, err
 	}
 	// If no results; get untracked changes

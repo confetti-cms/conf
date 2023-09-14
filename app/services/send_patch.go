@@ -78,12 +78,6 @@ func SendPatch(cli inter.Cli, env Environment, path, patch string, verbose bool)
 }
 
 func SendPatchE(cli inter.Cli, env Environment, path, patch string, verbose bool) error {
-	if patch == "" {
-		if verbose {
-			println("Ignore (no change in patch): " + path)
-		}
-		return nil
-	}
 	body := PatchBody{
 		Path:  path,
 		Patch: patch,
