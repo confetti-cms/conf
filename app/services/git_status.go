@@ -95,7 +95,7 @@ func IgnoreFile(file string) bool {
 	return false
 }
 
-func RemoveIfDeleted(cli inter.Cli, env Environment, change GitFileChange, root string) bool {
+func RemoveIfDeleted(cli inter.Cli, env Environment, change GitFileChange, root string, repo string) bool {
 	if change.Status != GitStatusDeleted {
 		return false
 	}
@@ -104,7 +104,7 @@ func RemoveIfDeleted(cli inter.Cli, env Environment, change GitFileChange, root 
 		return false
 	}
 	file := fileWithoutRoot(change.Path, root)
-	err = SendDeleteSource(cli, env, file)
+	err = SendDeleteSource(cli, env, file, repo)
 	if err != nil {
 		cli.Error(err.Error())
 		if !errors.Is(err, UserError) {

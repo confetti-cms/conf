@@ -10,8 +10,8 @@ type CheckoutBody struct {
 	Reset  bool   `json:"reset"`
 }
 
-func SendCheckout(cli inter.Cli, env Environment, requestBody CheckoutBody) error {
+func SendCheckout(cli inter.Cli, env Environment, requestBody CheckoutBody, repo string) error {
 	url := env.GetServiceUrl("confetti-cms/parser")
-	_, err := Send(cli, url + "/checkout", requestBody, http.MethodPut)
+	_, err := Send(cli, url + "/checkout", requestBody, http.MethodPut, env, repo)
     return err
 }

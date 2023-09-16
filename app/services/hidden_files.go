@@ -23,10 +23,10 @@ func IsHiddenFileGenerator(file string) bool {
 	return strings.HasSuffix(file, ComponentConfigSuffix) || strings.HasSuffix(file, ComponentClassSuffix)
 }
 
-func FetchHiddenFiles(cli inter.Cli, env Environment, root string, verbose bool) error {
+func FetchHiddenFiles(cli inter.Cli, env Environment, root string, verbose bool, repo string) error {
 	// Get content of component
 	url := env.GetServiceUrl("confetti-cms/parser")
-	body, err := Send(cli, url+"/source/components", nil, http.MethodGet)
+	body, err := Send(cli, url+"/source/components", nil, http.MethodGet, env, repo)
 	if err != nil {
 		return err
 	}
@@ -36,7 +36,10 @@ func FetchHiddenFiles(cli inter.Cli, env Environment, root string, verbose bool)
 	}
 	// Get file content from response
 	contentsRaw := []map[string]string{}
-	json.Unmarshal([]byte(body), &contentsRaw)
+	err = json.Unmarshal([]byte(body), &contentsRaw)
+	if err != nil {
+		return err
+	}
 	for _, contentRaw := range contentsRaw {
 		content64 := contentRaw["content"]
 		file := contentRaw["file"]

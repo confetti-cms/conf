@@ -16,7 +16,9 @@ import (
 
 var UserError = errors.New("something went wrong, you can probably adjust it yourself to fix it")
 
-func Send(cli inter.Cli, url string, body any, method string) (string, error) {
+var retry = 0
+
+func Send(cli inter.Cli, url string, body any, method string, env Environment, repo string) (string, error) {
 	token, err := auth.GetAccessToken(cli)
 	if err != nil {
 		return "", err
@@ -49,18 +51,29 @@ func Send(cli inter.Cli, url string, body any, method string) (string, error) {
 		return "", err
 	}
 	if res.StatusCode == http.StatusForbidden {
-		fmt.Printf("\rSetting up development services. This usually takes 15 seconds")
-		time.Sleep(3 * time.Second)
-		retryResp, err := Send(cli, url, body, method)
-		return retryResp, err
+		if retry < 4 {
+			fmt.Printf("\rSetting up development services. This usually takes 5 seconds")
+		} else {
+			fmt.Printf("\rOperation is taking longer than expected.                    ")
+		}
+		if retry == 0 {
+			errStartDevContainers := startDevContainers(env, repo)
+			if errStartDevContainers != nil {
+				return "", fmt.Errorf("error starting dev containers: %w", errStartDevContainers)
+			}
+		}
+		time.Sleep(1 * time.Second)
+		retry++
+		return Send(cli, url, body, method, env, repo)
 	}
 	if res.StatusCode == http.StatusBadGateway {
 		// Override previous message with spaces
-		fmt.Printf("\rService is almost available. We'll be done in 5 seconds       ")
-		time.Sleep(3 * time.Second)
-		retryResp, err := Send(cli, url, body, method)
-		return retryResp, err
+		fmt.Printf("\rService is almost available. We'll be done in 2 seconds       ")
+		time.Sleep(1 * time.Second)
+		retry++
+		return Send(cli, url, body, method, env, repo)
 	}
+	retry = 0
 	if res.StatusCode > 299 {
 		if res.StatusCode == http.StatusBadRequest {
 			body := map[string]interface{}{}
@@ -80,4 +93,21 @@ func Send(cli inter.Cli, url string, body any, method string) (string, error) {
 		return string(responseBody), err
 	}
 	return string(responseBody), nil
+}
+
+func startDevContainers(env Environment, repository string) error {
+	jsonData := map[string]string{
+		"environment_key": env.Key,
+		"repository":      repository,
+	}
+	jsonValue, _ := json.Marshal(jsonData)
+	response, err := http.Post("http://api.confetti-cms.localhost/orchestrator/start_development", "application/json", bytes.NewBuffer(jsonValue))
+
+	if err != nil {
+		defer response.Body.Close()
+		bodyBytes, _ := ioutil.ReadAll(response.Body)
+		bodyString := string(bodyBytes)
+		return fmt.Errorf("error: %v, response: %s", err, bodyString)
+	}
+	return nil
 }

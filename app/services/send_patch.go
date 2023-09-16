@@ -23,7 +23,7 @@ var wg sync.WaitGroup
 
 const maxChanges = 100
 
-func PatchDir(cli inter.Cli, env Environment, root string, remoteCommit string, writer io.Writer, verbose bool) {
+func PatchDir(cli inter.Cli, env Environment, root string, remoteCommit string, writer io.Writer, repo string, verbose bool) {
 	// Get patches since latest remote commits
 	changes := ChangedFilesSinceRemoteCommit(root, remoteCommit)
 	changes = IgnoreHidden(changes)
@@ -39,7 +39,7 @@ func PatchDir(cli inter.Cli, env Environment, root string, remoteCommit string, 
 		change := change
 		go func() {
 			defer wg.Done()
-			removed := RemoveIfDeleted(cli, env, change, root)
+			removed := RemoveIfDeleted(cli, env, change, root, repo)
 			if removed {
 				if verbose {
 					println("File removed: " + change.Path)
@@ -52,7 +52,7 @@ func PatchDir(cli inter.Cli, env Environment, root string, remoteCommit string, 
 			}
 			patch := GetPatchSinceCommit(remoteCommit, root, change.Path, change.Status == GitStatusAdded, verbose)
 			_ = bar.Add(1)
-			SendPatch(cli, env, change.Path, patch, verbose)
+			SendPatch(cli, env, change.Path, patch, repo, verbose)
 			_ = bar.Add(1)
 		}()
 	}
@@ -60,8 +60,8 @@ func PatchDir(cli inter.Cli, env Environment, root string, remoteCommit string, 
 	wg.Wait()
 }
 
-func SendPatch(cli inter.Cli, env Environment, path, patch string, verbose bool) {
-	err := SendPatchE(cli, env, path, patch, verbose)
+func SendPatch(cli inter.Cli, env Environment, path, patch string, repo string, verbose bool) {
+	err := SendPatchE(cli, env, path, patch, repo, verbose)
 	if err != nil {
 		cli.Error(err.Error())
 		if !errors.Is(err, UserError) {
@@ -74,7 +74,7 @@ func SendPatch(cli inter.Cli, env Environment, path, patch string, verbose bool)
 	}
 }
 
-func SendPatchE(cli inter.Cli, env Environment, path, patch string, verbose bool) error {
+func SendPatchE(cli inter.Cli, env Environment, path, patch string, repo string, verbose bool) error {
 	body := PatchBody{
 		Path:  path,
 		Patch: patch,
@@ -83,7 +83,7 @@ func SendPatchE(cli inter.Cli, env Environment, path, patch string, verbose bool
 		println("Patch sending:", path)
 	}
 	url := env.GetServiceUrl("confetti-cms/parser")
-	_, err := Send(cli, url+"/source", body, http.MethodPatch)
+	_, err := Send(cli, url+"/source", body, http.MethodPatch, env, repo)
 	return err
 }
 

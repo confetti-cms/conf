@@ -47,19 +47,24 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	if t.Reset {
 		c.Info("Reset all components")
 	}
+	repo, err := services.GetRepositoryName(root)
+	if err != nil {
+	    c.Error(err.Error())
+	    return inter.Failure
+	}
 	err = services.SendCheckout(c, env, services.CheckoutBody{
 		Commit: remoteCommit,
 		Reset:  t.Reset,
-	})
+	}, repo)
 	if err != nil {
 		c.Error(err.Error())
 		if !errors.Is(err, services.UserError) {
 			return inter.Failure
 		}
 	}
-	services.PatchDir(c, env, root, remoteCommit, c.Writer(), t.Verbose)
+	services.PatchDir(c, env, root, remoteCommit, c.Writer(), repo, t.Verbose)
 	// Get the standard hidden files
-	err = services.FetchHiddenFiles(c, env, root, t.Verbose)
+	err = services.FetchHiddenFiles(c, env, root, t.Verbose, repo)
 	if err != nil {
 		c.Error(err.Error())
 		if !errors.Is(err, services.UserError) {
@@ -79,7 +84,7 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 		RemoteCommit: remoteCommit,
 		Root:         root,
 		Writer:       c.Writer(),
-	}.Watch(c, env, "")
+	}.Watch(c, env, "", repo)
 	// The watch is preventing the code from ever getting here
 	return inter.Success
 }
