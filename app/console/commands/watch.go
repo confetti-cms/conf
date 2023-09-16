@@ -66,7 +66,7 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 			return inter.Failure
 		}
 	}
-	// remove loading bar
+	// Remove loading bar
 	fmt.Printf("\r                                                                      ")
 	c.Line("")
 	for _, host := range env.GetExplicitHosts() {

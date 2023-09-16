@@ -29,10 +29,7 @@ func PatchDir(cli inter.Cli, env Environment, root string, remoteCommit string, 
 	changes = IgnoreHidden(changes)
 	// Do not allow too many changes
 	if len(changes) > maxChanges {
-		_, err := writer.Write([]byte("Too many changes. Use .gitignore to ignore libraries or commit and push your changes before running this command."))
-		if err != nil {
-			panic(err)
-		}
+		cli.Error("Too many changes. Use .gitignore to ignore libraries or commit and push your changes before running this command.")
 		os.Exit(1)
 	}
 	// Send patches since latest remote commits

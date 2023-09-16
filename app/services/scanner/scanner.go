@@ -135,7 +135,7 @@ func (w Scanner) startListening(cli inter.Cli, watcher *fsnotify.Watcher, env se
 					}
 				}
 			}
-			success(w.Verbose)
+			success(w.Verbose, file)
 		case err, ok := <-watcher.Errors:
 			if !ok {
 				continue
@@ -149,9 +149,9 @@ func eventIs(given fsnotify.Event, expect fsnotify.Op) bool {
 	return strings.Contains(given.Op.String(), expect.String()[1:])
 }
 
-func success(verbose bool) {
+func success(verbose bool, file string) {
 	if !verbose {
 		// Override previous message with spaces
-		fmt.Printf("\rLatest sync: %s                              ", time.Now().Format("2006-01-02 15:04:05"))
+		fmt.Printf("\rLatest sync: %s \033[1;34m%s\033[0m                              ", time.Now().Format("2006-01-02 15:04:05"), file)
 	}
 }
