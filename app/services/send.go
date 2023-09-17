@@ -40,10 +40,10 @@ func Send(cli inter.Cli, url string, body any, method string, env Environment, r
 	req.Header.Add("Authorization", "Bearer "+token)
 	// Do request
 	res, err := client.Do(req)
+	defer res.Body.Close()
 	if err != nil {
 		return "", err
 	}
-	defer res.Body.Close()
 	// Create response
 	responseBody, err := ioutil.ReadAll(res.Body)
 	if err != nil {
@@ -101,12 +101,15 @@ func startDevContainers(env Environment, repository string) error {
 		"repository":      repository,
 	}
 	jsonValue, _ := json.Marshal(jsonData)
-	response, err := http.Post("http://api.confetti-cms.localhost/orchestrator/start_development", "application/json", bytes.NewBuffer(jsonValue))
+	response, err := http.Post("http://api.confetti-cms.com/orchestrator/start_development", "application/json", bytes.NewBuffer(jsonValue))
+	defer response.Body.Close()
 
 	if err != nil {
-		defer response.Body.Close()
-		bodyBytes, _ := ioutil.ReadAll(response.Body)
-		bodyString := string(bodyBytes)
+		bodyString := ""
+		if response.Body != nil {
+			bodyBytes, _ := ioutil.ReadAll(response.Body)
+			bodyString = string(bodyBytes)
+		}
 		return fmt.Errorf("error: %v, response: %s", err, bodyString)
 	}
 	return nil
