@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"src/app/services/auth"
 	"time"
 
 	"github.com/confetti-framework/errors"
@@ -19,7 +18,7 @@ var UserError = errors.New("something went wrong, you can probably adjust it you
 var retry = 0
 
 func Send(cli inter.Cli, url string, body any, method string, env Environment, repo string) (string, error) {
-	token, err := auth.GetAccessToken(cli)
+	token, err := GetAccessToken(cli, env)
 	if err != nil {
 		return "", err
 	}
