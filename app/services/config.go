@@ -41,18 +41,19 @@ func (c *ContainerConfig) GetAllURLCombinations(defaultUri string) []string {
 }
 
 const OrchestratorApiDefault = "http://api.confetti-cms.com/orchestrator"
+const OrchestratorApiLocalhost = "http://api.confetti-cms.localhost/orchestrator"
 
 type Environment struct {
-	Key             string            `json:"key"`
-	OrchestratorApi string            `json:"orchestrator_api"`
-	Containers      []ContainerConfig `json:"containers"`
+	Key            string            `json:"key"`
+	RunOnLocalhost bool              `json:"run_on_localhost"`
+	Containers     []ContainerConfig `json:"containers"`
 }
 
-func (e Environment) GetOrchestratorApiOrDefault() string {
-	if e.OrchestratorApi == "" {
-		return OrchestratorApiDefault
+func (e Environment) GetOrchestratorApi() string {
+	if e.RunOnLocalhost {
+		return OrchestratorApiLocalhost
 	}
-	return e.OrchestratorApi
+	return OrchestratorApiDefault
 }
 
 func (e Environment) GetAllHosts() []string {

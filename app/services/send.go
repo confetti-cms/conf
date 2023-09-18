@@ -101,7 +101,7 @@ func startDevContainers(env Environment, repository string) error {
 	}
 	jsonValue, _ := json.Marshal(jsonData)
 	response, err := http.Post(
-		env.GetOrchestratorApiOrDefault() + "/start_development",
+		env.GetOrchestratorApi() + "/start_development",
 		"application/json",
 		bytes.NewBuffer(jsonValue),
 	)
