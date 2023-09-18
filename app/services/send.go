@@ -34,7 +34,6 @@ func Send(cli inter.Cli, url string, body any, method string, env Environment, r
 	if err != nil {
 		return "", err
 	}
-
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Authorization", "Bearer "+token)
@@ -101,7 +100,11 @@ func startDevContainers(env Environment, repository string) error {
 		"repository":      repository,
 	}
 	jsonValue, _ := json.Marshal(jsonData)
-	response, err := http.Post("http://api.confetti-cms.com/orchestrator/start_development", "application/json", bytes.NewBuffer(jsonValue))
+	response, err := http.Post(
+		env.GetOrchestratorApiOrDefault() + "/start_development",
+		"application/json",
+		bytes.NewBuffer(jsonValue),
+	)
 	defer response.Body.Close()
 
 	if err != nil {

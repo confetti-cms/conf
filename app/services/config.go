@@ -40,9 +40,19 @@ func (c *ContainerConfig) GetAllURLCombinations(defaultUri string) []string {
 	return combinations
 }
 
+const OrchestratorApiDefault = "http://api.confetti-cms.com/orchestrator"
+
 type Environment struct {
-	Key        string            `json:"key"`
-	Containers []ContainerConfig `json:"containers"`
+	Key             string            `json:"key"`
+	OrchestratorApi string            `json:"orchestrator_api"`
+	Containers      []ContainerConfig `json:"containers"`
+}
+
+func (e Environment) GetOrchestratorApiOrDefault() string {
+	if e.OrchestratorApi == "" {
+		return OrchestratorApiDefault
+	}
+	return e.OrchestratorApi
 }
 
 func (e Environment) GetAllHosts() []string {
