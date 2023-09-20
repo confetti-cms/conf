@@ -127,7 +127,7 @@ func GetAppConfig(dir string) (AppConfig, error) {
 	config := AppConfig{}
 	content, err := ioutil.ReadFile(filepath.Join(dir, configFile))
 	if err != nil {
-		return config, fmt.Errorf("error reading file: %s", err)
+		return config, fmt.Errorf("probably, you are not running this command in a Confetti project. Error: %s", err)
 	}
 
 	err = json5.Unmarshal(content, &config)
