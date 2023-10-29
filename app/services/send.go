@@ -38,15 +38,16 @@ func Send(cli inter.Cli, url string, body any, method string, env Environment, r
 	req.Header.Add("Authorization", "Bearer "+token)
 	// Do request
 	res, err := client.Do(req)
-	defer res.Body.Close()
 	if err != nil {
 		return "", err
 	}
+	defer res.Body.Close()
+
 	// Create response
 	responseBody, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		println("error response: " + string(responseBody))
-		return "", err
+		return "", fmt.Errorf("error reading response body: %w", err)
 	}
 	if res.StatusCode == http.StatusForbidden {
 		if retry < 4 {
