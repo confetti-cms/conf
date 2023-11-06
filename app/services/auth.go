@@ -1,6 +1,7 @@
 package services
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -187,8 +188,18 @@ func getRefreshToken(cli inter.Cli) (*token, error) {
 		return nil, err
 	}
 
-	cli.Comment("\nYou are not logged in here. Go to the following URL to log in:\n")
-	cli.Line(content.Url + "\n")
+	cli.Comment("One step left to sync your local code with the server 🎊\n")
+	cli.Comment("\033[34m               ╭──────────────────────╮\n               │ \033[0mClick enter to login \033[34m│\n               ╰──────────────────────╯\n")
+
+    buf := bufio.NewReader(os.Stdin)
+    _, _ = buf.ReadBytes('\n') // Wait for the key press
+	err = OpenUrl(content.Url)
+	if err != nil {
+		return nil, err
+	}
+	// Clean entire screen
+	print("\033[H\033[2J")
+	cli.Comment("Waiting...")
 	time.Sleep(5 * time.Second)
 
 	fmt.Print("\u001B[30;1m")
@@ -233,7 +244,7 @@ func getTokenByDeviceCode(cli inter.Cli, deviceCode string) (*token, error) {
 
 	// Clean entire screen
 	print("\033[H\033[2J")
-	cli.Info("You have successfully logged in")
+	cli.Info("You have successfully logged in 🥳")
 
 	content := &token{}
 
