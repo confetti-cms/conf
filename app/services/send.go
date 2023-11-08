@@ -50,6 +50,7 @@ func Send(cli inter.Cli, url string, body any, method string, env Environment, r
 		return "", fmt.Errorf("error reading response body: %w", err)
 	}
 	if res.StatusCode == http.StatusForbidden {
+		println(repo)
 		if retry < 4 {
 			fmt.Printf("\rSetting up development services. This usually takes 5 seconds")
 		} else {
@@ -116,12 +117,6 @@ func startDevContainers(env Environment, repository string) error {
 		}
 		return fmt.Errorf("error: %v, response: %s", err, bodyString)
 	}
-	bodyString := ""
-	if response.Body != nil {
-		bodyBytes, _ := ioutil.ReadAll(response.Body)
-		bodyString = string(bodyBytes)
-	}
-	println("body: " + bodyString)
 
 	return nil
 }
