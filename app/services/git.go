@@ -3,6 +3,7 @@ package services
 import (
 	"errors"
 	"fmt"
+	"github.com/confetti-framework/framework/support"
 	"log"
 	"os/exec"
 	"regexp"
@@ -11,6 +12,7 @@ import (
 	"github.com/spf13/cast"
 )
 
+
 func GetRepositoryName(root string) (string, error) {
 	// output example: git@github.com:confetti-cms/office.git
 	// output example: https://github.com/confetti-cms/office.git
@@ -18,6 +20,7 @@ func GetRepositoryName(root string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to get repository name: %v", err)
 	}
+	output = strings.TrimSpace(output)
 	return GetRepositoryNameByOriginUrl(output)
 }
 
@@ -26,13 +29,10 @@ func GetRepositoryNameByOriginUrl(url string) (string, error) {
 	// url example: https://github.com/.git
 	re := regexp.MustCompile(`([^/:]*/[^/]*)\.git$`)
 	match := re.FindStringSubmatch(url)
-	
 	if len(match) != 2 {
-		return "", errors.New("Failed to parse repo name from url: " + url)
+		return "", errors.New("failed to parse repo name from url: '" + url + "'")
 	}
-	name := match[1]
-	
-	return name, nil
+	return match[1], nil
 }
 
 func GitAdd(path string) (string, error) {
