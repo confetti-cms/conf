@@ -5,34 +5,33 @@ import (
 	"fmt"
 	"log"
 	"os/exec"
+	"regexp"
 	"strings"
 
 	"github.com/spf13/cast"
 )
 
 func GetRepositoryName(root string) (string, error) {
-	// output example: git@github.com:confetti-cms/office_dev.git
-println(fmt.Sprintf(`cd %s && git config --get remote.origin.url`, root))
+	// output example: git@github.com:confetti-cms/office.git
+	// output example: https://github.com/confetti-cms/office.git
 	output, err := RunCommand(fmt.Sprintf(`cd %s && git config --get remote.origin.url`, root))
 	if err != nil {
 		return "", fmt.Errorf("failed to get repository name: %v", err)
 	}
+	return GetRepositoryNameByOriginUrl(output)
+}
 
-	name := ""
-	// Trim GitHub
-	parts := strings.Split(output, ":")
-	if len(parts) >= 2 {
-		urlPart := parts[1]
-		// Trim .git
-		nameSlice := strings.Split(urlPart, ".")
-		if len(nameSlice) > 0 {
-			name = nameSlice[0]
-		}
+func GetRepositoryNameByOriginUrl(url string) (string, error) {
+	// url example: git@github.com:confetti-cms/office.git
+	// url example: https://github.com/.git
+	re := regexp.MustCompile(`([^/:]*/[^/]*)\.git$`)
+	match := re.FindStringSubmatch(url)
+	
+	if len(match) != 2 {
+		return "", errors.New("Failed to parse repo name from url: " + url)
 	}
-	if name == "" {
-		return "", errors.New("can not parse repository name from : " + string(output))
-	}
-
+	name := match[1]
+	
 	return name, nil
 }
 

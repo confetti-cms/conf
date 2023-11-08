@@ -12,7 +12,7 @@ func Test_patch_unkown_file(t *testing.T) {
 	// Given
 	dir := initTestGit()
 	// When
-	patch, err := services.GetPatchSinceCommitE("", dir, "unkown.md")
+	patch, err := services.GetPatchSinceCommitE("", dir, "unkown.md", true)
 	// Then
 	i := is.New(t)
 	i.Equal(patch, "")
@@ -28,7 +28,7 @@ func Test_patch_line_changed(t *testing.T) {
 	gitCommit(dir, file)
 	setFileContent(dir, file, "<?php")
 	// When
-	patch, err := services.GetPatchSinceCommitE("", dir, file)
+	patch, err := services.GetPatchSinceCommitE("", dir, file, true)
 	// Then
 	i := is.New(t)
 	i.NoErr(err)
@@ -51,7 +51,7 @@ func Test_patch_from_specific_commit(t *testing.T) {
 	setFileContent(dir, file, "second_")
 	since := getCommitFromLog(dir, 1)
 	// When
-	patch, err := services.GetPatchSinceCommitE(since, dir, file)
+	patch, err := services.GetPatchSinceCommitE(since, dir, file, true)
 	// Then
 	i := is.New(t)
 	i.NoErr(err)
