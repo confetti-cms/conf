@@ -106,8 +106,6 @@ func startDevContainers(env Environment, repository string) error {
 		bytes.NewBuffer(jsonValue),
 	)
 	defer response.Body.Close()
-	println("Response Status:", response.Status)
-
 	if err != nil {
 		bodyString := ""
 		if response.Body != nil {
