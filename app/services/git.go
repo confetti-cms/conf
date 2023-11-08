@@ -6,6 +6,7 @@ import (
 	"log"
 	"os/exec"
 	"regexp"
+	"src/config"
 	"strings"
 
 	"github.com/spf13/cast"
@@ -20,7 +21,11 @@ func GetRepositoryName(root string) (string, error) {
 		return "", fmt.Errorf("failed to get repository name: %v", err)
 	}
 	output = strings.TrimSpace(output)
-	return GetRepositoryNameByOriginUrl(output)
+	result, err := GetRepositoryNameByOriginUrl(output)
+	if config.App.Debug {
+		fmt.Printf("Current repository: %s", result)
+	}
+	return result, err
 }
 
 func GetRepositoryNameByOriginUrl(url string) (string, error) {
@@ -47,7 +52,8 @@ func GitIgnored(root, dir string) bool {
 		return false
 	}
 	dir = strings.TrimPrefix(dir, root+"/")
-	out, _ := RunCommand(fmt.Sprintf(`cd %s && git check-ignore %s`, root, dir))
+	cmd := fmt.Sprintf(`cd %s && git check-ignore %s`, root, dir)
+	out, _ := RunCommand(cmd)
 	// Ignore the error (exit status 1)
 	if out == "" {
 		return false
@@ -56,15 +62,16 @@ func GitIgnored(root, dir string) bool {
 }
 
 func GitRemoteCommit(dir string) string {
-	raw, err := RunCommand("cd " + dir + " && git for-each-ref refs/remotes/origin --count 1 --format \"%(objectname)\"")
+	cmd := "cd " + dir + " && git for-each-ref refs/remotes/origin --count 1 --format \"%(objectname)\""
+	out, err := RunCommand(cmd)
 	if err != nil {
 		if ee, ok := err.(*exec.ExitError); ok {
 			log.Fatal(cast.ToString(ee.Stderr))
 		}
 		log.Fatal(err)
 	}
-	if strings.Contains(raw, "fatal") {
-		log.Fatal(raw)
+	if strings.Contains(out, "fatal") {
+		log.Fatal(out)
 	}
-	return strings.Trim(raw, "\n")
+	return strings.Trim(out, "\n")
 }

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"src/config"
 	"time"
 
 	"github.com/confetti-framework/errors"
@@ -29,6 +30,7 @@ func Send(cli inter.Cli, url string, body any, method string, env Environment, r
 	payload := bytes.NewBuffer(payloadB)
 	// Create request
 	client := &http.Client{Timeout: 30 * time.Second}
+	debugRequest(method, url, payload.String())
 	req, err := http.NewRequest(method, url, payload)
 	if err != nil {
 		return "", err
@@ -67,7 +69,7 @@ func Send(cli inter.Cli, url string, body any, method string, env Environment, r
 	}
 	if res.StatusCode == http.StatusBadGateway {
 		// Override previous message with spaces
-		fmt.Printf("\rService is almost available. We'll be done in 2 seconds       ")
+		fmt.Printf("\rService is almost available. We'll be done in 3 seconds       ")
 		time.Sleep(1 * time.Second)
 		retry++
 		return Send(cli, url, body, method, env, repo)
@@ -92,6 +94,15 @@ func Send(cli inter.Cli, url string, body any, method string, env Environment, r
 		return string(responseBody), err
 	}
 	return string(responseBody), nil
+}
+
+func debugRequest(method string, url string, payload string) {
+	if config.App.Debug {
+		if len(payload) > 300 {
+			payload = payload[:300] + "(...)"
+		}
+		fmt.Printf("Method: %s, URL: %s, Payload: %s\n", method, url, payload)
+	}
 }
 
 func startDevContainers(env Environment, repository string) error {

@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"src/app/services"
+	"src/config"
 	"strings"
 	"time"
 
@@ -16,7 +17,6 @@ import (
 )
 
 type Scanner struct {
-	Verbose      bool
 	RemoteCommit string
 	Root         string
 	Writer       io.Writer
@@ -51,7 +51,7 @@ func (w Scanner) addRecursive(watcher *fsnotify.Watcher, dir string) {
 		if services.GitIgnored(w.Root, walkPath) {
 			return nil
 		}
-		if w.Verbose {
+		if config.App.Debug {
 			println("Watch directory: " + walkPath)
 		}
 		err = watcher.Add(walkPath)
@@ -82,12 +82,12 @@ func (w Scanner) startListening(cli inter.Cli, watcher *fsnotify.Watcher, env se
 			}
 			// Trim local file path
 			file := strings.ReplaceAll(event.Name, w.Root+"/", "")
-			if w.Verbose {
+			if config.App.Debug {
 				log.Println("Modified file: ", event.Name, " Op:", event.Op)
 			}
 			// Removed (by removing or renaming)
 			if eventIs(event, fsnotify.Rename) || eventIs(event, fsnotify.Remove) {
-				if w.Verbose {
+				if config.App.Debug {
 					println("Send delete Source: " + file)
 				}
 				err := services.SendDeleteSource(cli, env, file, repo)
@@ -96,7 +96,7 @@ func (w Scanner) startListening(cli inter.Cli, watcher *fsnotify.Watcher, env se
 					println(err.Error())
 				}
 				if services.IsHiddenFileGenerator(file) {
-					err = services.FetchHiddenFiles(cli, env, w.Root, w.Verbose, repo)
+					err = services.FetchHiddenFiles(cli, env, w.Root, repo)
 					if err != nil {
 						cli.Error(err.Error())
 						if !errors.Is(err, services.UserError) {
@@ -117,17 +117,17 @@ func (w Scanner) startListening(cli inter.Cli, watcher *fsnotify.Watcher, env se
 				if services.GitIgnored(w.Root, event.Name) {
 					continue
 				}
-				if w.Verbose {
+				if config.App.Debug {
 					println("Patch and watch new dir: " + event.Name)
 				}
-				services.PatchDir(cli, env, w.Root, w.RemoteCommit, w.Writer, repo, w.Verbose)
+				services.PatchDir(cli, env, w.Root, w.RemoteCommit, w.Writer, repo)
 				w.addRecursive(watcher, event.Name)
 				continue
 			}
-			patch := services.GetPatchSinceCommit(w.RemoteCommit, w.Root, file, eventIs(event, fsnotify.Create), w.Verbose)
-			services.SendPatch(cli, env, file, patch, repo, w.Verbose)
+			patch := services.GetPatchSinceCommit(w.RemoteCommit, w.Root, file, eventIs(event, fsnotify.Create))
+			services.SendPatch(cli, env, file, patch, repo)
 			if services.IsHiddenFileGenerator(file) {
-				err = services.FetchHiddenFiles(cli, env, w.Root, w.Verbose, repo)
+				err = services.FetchHiddenFiles(cli, env, w.Root, repo)
 				if err != nil {
 					cli.Error(err.Error())
 					if !errors.Is(err, services.UserError) {
@@ -135,7 +135,11 @@ func (w Scanner) startListening(cli inter.Cli, watcher *fsnotify.Watcher, env se
 					}
 				}
 			}
-			success(w.Verbose, file)
+			ln := ""
+			if config.App.Debug {
+				ln = "\n"
+			}
+			fmt.Printf("\rLatest sync: %s \033[1;34m%s\033[0m                              %s", time.Now().Format("2006-01-02 15:04:05"), file, ln)
 		case err, ok := <-watcher.Errors:
 			if !ok {
 				continue
@@ -147,11 +151,4 @@ func (w Scanner) startListening(cli inter.Cli, watcher *fsnotify.Watcher, env se
 
 func eventIs(given fsnotify.Event, expect fsnotify.Op) bool {
 	return strings.Contains(given.Op.String(), expect.String()[1:])
-}
-
-func success(verbose bool, file string) {
-	if !verbose {
-		// Override previous message with spaces
-		fmt.Printf("\rLatest sync: %s \033[1;34m%s\033[0m                              ", time.Now().Format("2006-01-02 15:04:05"), file)
-	}
 }

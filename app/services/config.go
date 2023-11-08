@@ -1,10 +1,10 @@
 package services
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
+	"src/config"
 	"strings"
 
 	"github.com/confetti-framework/framework/inter"
@@ -105,13 +105,13 @@ func (e Environment) GetServiceUrl(service string) string {
 	return "http://" + host + getUriByAlias(match, service)
 }
 
-func getUriByAlias(config ContainerConfig, service string) string {
+func getUriByAlias(cConfig ContainerConfig, service string) string {
 	uri := ""
-	if len(config.Paths) > 0 {
+	if len(cConfig.Paths) > 0 {
 		// For now, we only support 1 path max
-		uri += "/" + strings.TrimLeft(config.Paths[0], "/")
+		uri += "/" + strings.TrimLeft(cConfig.Paths[0], "/")
 	}
-	if config.UserServiceInUri {
+	if cConfig.UserServiceInUri {
 		// For now, we only support 1 suffix path max
 		uri += "/" + service
 	}
@@ -124,38 +124,43 @@ type AppConfig struct {
 }
 
 func GetAppConfig(dir string) (AppConfig, error) {
-	config := AppConfig{}
+	aConfig := AppConfig{}
 	content, err := ioutil.ReadFile(filepath.Join(dir, configFile))
 	if err != nil {
-		return config, fmt.Errorf("probably, you are not running this command in a Confetti project. Error: %s", err)
+		return aConfig, fmt.Errorf("probably, you are not running this command in a Confetti project. Error: %s", err)
 	}
 
-	err = json5.Unmarshal(content, &config)
+	err = json5.Unmarshal(content, &aConfig)
 	if err != nil {
-		return config, fmt.Errorf("error unmarshal json5: %s", err)
+		return aConfig, fmt.Errorf("error unmarshal json5: %s", err)
 	}
 
-	return config, nil
+	return aConfig, nil
 }
 
-func GetEnvironmentByInput(c inter.Cli, dir string) (Environment, error) {
-	config, err := GetAppConfig(dir)
+func GetEnvironmentByInput(c inter.Cli, dir string, envKey string) (Environment, error) {
+	appConfig, err := GetAppConfig(dir)
 	if err != nil {
 		return Environment{}, err
 	}
 	keys := []string{}
-	for _, environment := range config.Environments {
+	for _, environment := range appConfig.Environments {
 		keys = append(keys, environment.Key)
 	}
 	if len(keys) == 1 {
-		return config.Environments[0], nil
+		return appConfig.Environments[0], nil
 	}
-	envKey := c.Choice("Choose your environment", keys...)
-	for _, environment := range config.Environments {
+	if envKey == "" {
+		envKey = c.Choice("Choose your environment", keys...)
+	}
+	for _, environment := range appConfig.Environments {
 		if environment.Key == envKey {
+			if config.App.Debug {
+			    fmt.Println("Environment key is:", envKey)
+			}
 			return environment, nil
 		}
 	}
 
-	return Environment{}, errors.New("The key " + envKey + " does not match any environment")
+	return Environment{}, fmt.Errorf("the key %s does not match any environment. Available keys are %s", envKey, strings.Join(keys, ", "))
 }

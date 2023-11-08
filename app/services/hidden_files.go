@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"src/config"
 	"strings"
 
 	"github.com/confetti-framework/framework/inter"
@@ -23,7 +24,7 @@ func IsHiddenFileGenerator(file string) bool {
 	return strings.HasSuffix(file, ComponentConfigSuffix) || strings.HasSuffix(file, ComponentClassSuffix)
 }
 
-func FetchHiddenFiles(cli inter.Cli, env Environment, root string, verbose bool, repo string) error {
+func FetchHiddenFiles(cli inter.Cli, env Environment, root string, repo string) error {
 	// Get content of component
 	url := env.GetServiceUrl("confetti-cms/parser")
 	body, err := Send(cli, url+"/source/components", nil, http.MethodGet, env, repo)
@@ -62,7 +63,7 @@ func FetchHiddenFiles(cli inter.Cli, env Environment, root string, verbose bool,
 		if err != nil {
 			return err
 		}
-		if verbose {
+		if config.App.Debug {
 			println("Standard hidden component saved: " + target)
 		}
 	}

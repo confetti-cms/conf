@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"src/app/services"
 	"src/app/services/scanner"
+	"src/config"
 
 	"github.com/confetti-framework/errors"
 
@@ -28,16 +29,17 @@ func (t Watch) Description() string {
 }
 
 func (t Watch) Handle(c inter.Cli) inter.ExitCode {
+	config.App.Debug = t.Verbose
 	root, err := t.getDirectoryOrCurrent()
 	if err != nil {
 		c.Error(err.Error())
 		return inter.Failure
 	}
-	if t.Verbose {
+	if config.App.Debug {
 		c.Info("Use directory: %s", root)
 	}
 	c.Info("Confetti watch")
-	env, err := services.GetEnvironmentByInput(c, root)
+	env, err := services.GetEnvironmentByInput(c, root, t.Environment)
 	if err != nil {
 		c.Error(err.Error())
 		return inter.Failure
@@ -62,9 +64,9 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 			return inter.Failure
 		}
 	}
-	services.PatchDir(c, env, root, remoteCommit, c.Writer(), repo, t.Verbose)
+	services.PatchDir(c, env, root, remoteCommit, c.Writer(), repo)
 	// Get the standard hidden files
-	err = services.FetchHiddenFiles(c, env, root, t.Verbose, repo)
+	err = services.FetchHiddenFiles(c, env, root, repo)
 	if err != nil {
 		c.Error(err.Error())
 		if !errors.Is(err, services.UserError) {
@@ -80,7 +82,6 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	}
 	// Scan and watch next changes
 	scanner.Scanner{
-		Verbose:      t.Verbose,
 		RemoteCommit: remoteCommit,
 		Root:         root,
 		Writer:       c.Writer(),

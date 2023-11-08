@@ -2,11 +2,12 @@ package services
 
 import (
 	"fmt"
+	"src/config"
 	"strings"
 )
 
-func GetPatchSinceCommit(commit, root string, path string, isNew bool, verbose bool) string {
-	if verbose {
+func GetPatchSinceCommit(commit, root string, path string, isNew bool) string {
+	if config.App.Debug {
 		println("Create patch: " + path)
 	}
 	patch, err := GetPatchSinceCommitE(commit, root, path, isNew)

@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"src/config"
 	"sync"
 
 	"github.com/confetti-framework/framework/inter"
@@ -23,7 +24,7 @@ var wg sync.WaitGroup
 
 const maxChanges = 100
 
-func PatchDir(cli inter.Cli, env Environment, root string, remoteCommit string, writer io.Writer, repo string, verbose bool) {
+func PatchDir(cli inter.Cli, env Environment, root string, remoteCommit string, writer io.Writer, repo string) {
 	// Get patches since latest remote commits
 	changes := ChangedFilesSinceRemoteCommit(root, remoteCommit)
 	changes = IgnoreHidden(changes)
@@ -33,7 +34,7 @@ func PatchDir(cli inter.Cli, env Environment, root string, remoteCommit string, 
 		os.Exit(1)
 	}
 	// Send patches since latest remote commits
-	bar := getBar(len(changes)*2, "Sync local changes with Confetti", writer, verbose)
+	bar := getBar(len(changes)*2, "Sync local changes with Confetti", writer)
 	wg.Add(len(changes))
 	for _, change := range changes {
 		change := change
@@ -41,18 +42,18 @@ func PatchDir(cli inter.Cli, env Environment, root string, remoteCommit string, 
 			defer wg.Done()
 			removed := RemoveIfDeleted(cli, env, change, root, repo)
 			if removed {
-				if verbose {
+				if config.App.Debug {
 					println("File removed: " + change.Path)
 				}
 				_ = bar.Add(2)
 				return
 			}
-			if verbose {
+			if config.App.Debug {
 				println("Patch file: " + change.Path)
 			}
-			patch := GetPatchSinceCommit(remoteCommit, root, change.Path, change.Status == GitStatusAdded, verbose)
+			patch := GetPatchSinceCommit(remoteCommit, root, change.Path, change.Status == GitStatusAdded)
 			_ = bar.Add(1)
-			SendPatch(cli, env, change.Path, patch, repo, verbose)
+			SendPatch(cli, env, change.Path, patch, repo)
 			_ = bar.Add(1)
 		}()
 	}
@@ -60,8 +61,8 @@ func PatchDir(cli inter.Cli, env Environment, root string, remoteCommit string, 
 	wg.Wait()
 }
 
-func SendPatch(cli inter.Cli, env Environment, path, patch string, repo string, verbose bool) {
-	err := SendPatchE(cli, env, path, patch, repo, verbose)
+func SendPatch(cli inter.Cli, env Environment, path, patch string, repo string) {
+	err := SendPatchE(cli, env, path, patch, repo)
 	if err != nil {
 		cli.Error(err.Error())
 		if !errors.Is(err, UserError) {
@@ -69,17 +70,17 @@ func SendPatch(cli inter.Cli, env Environment, path, patch string, repo string, 
 		}
 		return
 	}
-	if verbose {
+	if config.App.Debug {
 		println("Patch send: " + path)
 	}
 }
 
-func SendPatchE(cli inter.Cli, env Environment, path, patch string, repo string, verbose bool) error {
+func SendPatchE(cli inter.Cli, env Environment, path, patch string, repo string) error {
 	body := PatchBody{
 		Path:  path,
 		Patch: patch,
 	}
-	if verbose {
+	if config.App.Debug {
 		println("Patch sending:", path)
 	}
 	url := env.GetServiceUrl("confetti-cms/parser")
@@ -87,11 +88,11 @@ func SendPatchE(cli inter.Cli, env Environment, path, patch string, repo string,
 	return err
 }
 
-func getBar(total int, description string, writer io.Writer, verbose bool) *progressbar.ProgressBar {
+func getBar(total int, description string, writer io.Writer) *progressbar.ProgressBar {
 	if total == 0 {
 		return nil
 	}
-	if verbose {
+	if config.App.Debug {
 		// Ignore progressbar in verbose mode
 		writer = io.Discard
 	}
