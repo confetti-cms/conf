@@ -96,7 +96,8 @@ func getBar(total int, description string, writer io.Writer) *progressbar.Progre
 		// Ignore progressbar in verbose mode
 		writer = io.Discard
 	}
-	return progressbar.NewOptions(total,
+	return progressbar.NewOptions(
+		total,
 		progressbar.OptionEnableColorCodes(true),
 		progressbar.OptionSetWriter(writer),
 		progressbar.OptionShowBytes(false),
@@ -108,5 +109,6 @@ func getBar(total int, description string, writer io.Writer) *progressbar.Progre
 			SaucerPadding: "-",
 			BarStart:      "|",
 			BarEnd:        "|",
-		}))
+		}),
+	)
 }
