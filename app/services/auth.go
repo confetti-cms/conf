@@ -189,7 +189,7 @@ func getRefreshToken(cli inter.Cli) (*token, error) {
 	}
 
 	cli.Comment("One step left to sync your local code with the server 🎊\n")
-	cli.Comment("\033[34m               ╭──────────────────────╮\n               │ \033[0mClick enter to login \033[34m│\n               ╰──────────────────────╯\n")
+	cli.Comment("\033[34m               ╭──────────────────────╮\n               │ \033[0mPress enter to login \033[34m│\n               ╰──────────────────────╯\n")
 
     buf := bufio.NewReader(os.Stdin)
     _, _ = buf.ReadBytes('\n') // Wait for the key press
