@@ -12,6 +12,7 @@ import (
 
 func GetRepositoryName(root string) (string, error) {
 	// output example: git@github.com:confetti-cms/office_dev.git
+println(fmt.Sprintf(`cd %s && git config --get remote.origin.url`, root))
 	output, err := RunCommand(fmt.Sprintf(`cd %s && git config --get remote.origin.url`, root))
 	if err != nil {
 		return "", fmt.Errorf("failed to get repository name: %v", err)

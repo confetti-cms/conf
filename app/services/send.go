@@ -50,7 +50,6 @@ func Send(cli inter.Cli, url string, body any, method string, env Environment, r
 		return "", fmt.Errorf("error reading response body: %w", err)
 	}
 	if res.StatusCode == http.StatusForbidden {
-		println(repo)
 		if retry < 4 {
 			fmt.Printf("\rSetting up development services. This usually takes 5 seconds")
 		} else {
