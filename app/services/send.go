@@ -116,5 +116,12 @@ func startDevContainers(env Environment, repository string) error {
 		}
 		return fmt.Errorf("error: %v, response: %s", err, bodyString)
 	}
+	bodyString := ""
+	if response.Body != nil {
+		bodyBytes, _ := ioutil.ReadAll(response.Body)
+		bodyString = string(bodyBytes)
+	}
+	println("body: " + bodyString)
+
 	return nil
 }
