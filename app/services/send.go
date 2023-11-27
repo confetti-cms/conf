@@ -53,9 +53,9 @@ func Send(cli inter.Cli, url string, body any, method string, env Environment, r
 	}
 	if res.StatusCode == http.StatusForbidden {
 		if retry < 4 {
-			fmt.Printf("\rSetting up development services. This usually takes 5 seconds")
+			fmt.Printf("\rSetting up development services. This usually takes 5 seconds    ")
 		} else {
-			fmt.Printf("\rOperation is taking longer than expected.                    ")
+			fmt.Printf("\rOperation is taking longer than expected.                        ")
 		}
 		if retry == 0 {
 			errStartDevContainers := startDevContainers(env, repo)
@@ -69,7 +69,7 @@ func Send(cli inter.Cli, url string, body any, method string, env Environment, r
 	}
 	if res.StatusCode == http.StatusBadGateway {
 		// Override previous message with spaces
-		fmt.Printf("\rService is almost available. We'll be done in 3 seconds       ")
+		fmt.Printf("\rDevelopment services are almost available. We'll be done in 3 seconds")
 		time.Sleep(1 * time.Second)
 		retry++
 		return Send(cli, url, body, method, env, repo)
@@ -112,7 +112,7 @@ func startDevContainers(env Environment, repository string) error {
 	}
 	jsonValue, _ := json.Marshal(jsonData)
 	response, err := http.Post(
-		env.GetOrchestratorApi() + "/start_development",
+		env.GetOrchestratorApi()+"/start_development",
 		"application/json",
 		bytes.NewBuffer(jsonValue),
 	)

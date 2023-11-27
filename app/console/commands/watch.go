@@ -7,6 +7,7 @@ import (
 	"src/app/services"
 	"src/app/services/scanner"
 	"src/config"
+	"strings"
 
 	"github.com/confetti-framework/errors"
 
@@ -29,6 +30,7 @@ func (t Watch) Description() string {
 }
 
 func (t Watch) Handle(c inter.Cli) inter.ExitCode {
+	t.Directory = strings.TrimRight(t.Directory, "/") + "/"
 	config.App.Debug = t.Verbose
 	root, err := t.getDirectoryOrCurrent()
 	if err != nil {
@@ -51,8 +53,8 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	}
 	repo, err := services.GetRepositoryName(root)
 	if err != nil {
-	    c.Error(err.Error())
-	    return inter.Failure
+		c.Error(err.Error())
+		return inter.Failure
 	}
 	err = services.SendCheckout(c, env, services.CheckoutBody{
 		Commit: remoteCommit,

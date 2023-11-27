@@ -66,6 +66,7 @@ func SendPatch(cli inter.Cli, env Environment, path, patch string, repo string) 
 	if err != nil {
 		cli.Error(err.Error())
 		if !errors.Is(err, UserError) {
+			PlayErrorSound()
 			log.Fatal(err)
 		}
 		return

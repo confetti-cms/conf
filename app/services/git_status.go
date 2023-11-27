@@ -115,7 +115,7 @@ func RemoveIfDeleted(cli inter.Cli, env Environment, change GitFileChange, root 
 }
 
 func fileWithoutRoot(path, root string) string {
-	return strings.ReplaceAll(path, root+"/", "")
+	return strings.ReplaceAll(path, root, "")
 }
 
 // https://git-scm.com/docs/git-status#_stash_information

@@ -45,4 +45,3 @@ func Test_get_repository_by_https_url(t *testing.T) {
 	i.Equal(name, "confetti-cms/office")
 	i.NoErr(err)
 }
-

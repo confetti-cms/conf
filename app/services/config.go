@@ -156,7 +156,7 @@ func GetEnvironmentByInput(c inter.Cli, dir string, envKey string) (Environment,
 	for _, environment := range appConfig.Environments {
 		if environment.Key == envKey {
 			if config.App.Debug {
-			    fmt.Println("Environment key is:", envKey)
+				fmt.Println("Environment key is:", envKey)
 			}
 			return environment, nil
 		}

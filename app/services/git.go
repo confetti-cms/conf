@@ -12,7 +12,6 @@ import (
 	"github.com/spf13/cast"
 )
 
-
 func GetRepositoryName(root string) (string, error) {
 	// output example: git@github.com:confetti-cms/office.git
 	// output example: https://github.com/confetti-cms/office.git
@@ -51,7 +50,7 @@ func GitIgnored(root, dir string) bool {
 	if dir == root {
 		return false
 	}
-	dir = strings.TrimPrefix(dir, root+"/")
+	dir = strings.TrimPrefix(dir, root)
 	cmd := fmt.Sprintf(`cd %s && git check-ignore %s`, root, dir)
 	out, _ := RunCommand(cmd)
 	// Ignore the error (exit status 1)

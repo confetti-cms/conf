@@ -81,7 +81,7 @@ func (w Scanner) startListening(cli inter.Cli, watcher *fsnotify.Watcher, env se
 				continue
 			}
 			// Trim local file path
-			file := strings.ReplaceAll(event.Name, w.Root+"/", "")
+			file := strings.ReplaceAll(event.Name, w.Root, "")
 			if config.App.Debug {
 				log.Println("Modified file: ", event.Name, " Op:", event.Op)
 			}
@@ -125,6 +125,7 @@ func (w Scanner) startListening(cli inter.Cli, watcher *fsnotify.Watcher, env se
 				continue
 			}
 			patch := services.GetPatchSinceCommit(w.RemoteCommit, w.Root, file, eventIs(event, fsnotify.Create))
+
 			services.SendPatch(cli, env, file, patch, repo)
 			if services.IsHiddenFileGenerator(file) {
 				err = services.FetchHiddenFiles(cli, env, w.Root, repo)
