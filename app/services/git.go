@@ -46,22 +46,23 @@ func GitCommit(path string) (string, error) {
 	return RunCommand(fmt.Sprintf(`git commit -m "Message" "%s"`, path))
 }
 
-func GitIgnored(root, dir string) bool {
+func GitIgnored(dir string) bool {
+	root := config.Path.Root
 	if dir == root {
 		return false
 	}
 	dir = strings.TrimPrefix(dir, root)
 	cmd := fmt.Sprintf(`cd %s && git check-ignore %s`, root, dir)
 	out, _ := RunCommand(cmd)
-	// Ignore the error (exit status 1)
+	// AllTime the error (exit status 1)
 	if out == "" {
 		return false
 	}
 	return true
 }
 
-func GitRemoteCommit(dir string) string {
-	cmd := "cd " + dir + " && git for-each-ref refs/remotes/origin --count 1 --format \"%(objectname)\""
+func GitRemoteCommit() string {
+	cmd := "cd " + config.Path.Root + " && git for-each-ref refs/remotes/origin --count 1 --format \"%(objectname)\""
 	out, err := RunCommand(cmd)
 	if err != nil {
 		if ee, ok := err.(*exec.ExitError); ok {

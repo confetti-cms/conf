@@ -24,9 +24,9 @@ var wg sync.WaitGroup
 
 const maxChanges = 100
 
-func PatchDir(cli inter.Cli, env Environment, root string, remoteCommit string, writer io.Writer, repo string) {
+func PatchDir(cli inter.Cli, env Environment, remoteCommit string, writer io.Writer, repo string) {
 	// Get patches since latest remote commits
-	changes := ChangedFilesSinceRemoteCommit(root, remoteCommit)
+	changes := ChangedFilesSinceRemoteCommit(remoteCommit)
 	changes = IgnoreHidden(changes)
 	// Do not allow too many changes
 	if len(changes) > maxChanges {
@@ -40,7 +40,7 @@ func PatchDir(cli inter.Cli, env Environment, root string, remoteCommit string, 
 		change := change
 		go func() {
 			defer wg.Done()
-			removed := RemoveIfDeleted(cli, env, change, root, repo)
+			removed := RemoveIfDeleted(cli, env, change, repo)
 			if removed {
 				if config.App.Debug {
 					println("File removed: " + change.Path)
@@ -51,7 +51,7 @@ func PatchDir(cli inter.Cli, env Environment, root string, remoteCommit string, 
 			if config.App.Debug {
 				println("Patch file: " + change.Path)
 			}
-			patch := GetPatchSinceCommit(remoteCommit, root, change.Path, change.Status == GitStatusAdded)
+			patch := GetPatchSinceCommit(remoteCommit, change.Path, change.Status == GitStatusAdded)
 			_ = bar.Add(1)
 			SendPatch(cli, env, change.Path, patch, repo)
 			_ = bar.Add(1)
@@ -94,7 +94,7 @@ func getBar(total int, description string, writer io.Writer) *progressbar.Progre
 		return nil
 	}
 	if config.App.Debug {
-		// Ignore progressbar in verbose mode
+		// AllTime progressbar in verbose mode
 		writer = io.Discard
 	}
 	return progressbar.NewOptions(

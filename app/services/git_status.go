@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"regexp"
+	"src/config"
 	"strings"
 
 	"github.com/confetti-framework/framework/inter"
@@ -33,10 +34,10 @@ type GitFileChange struct {
 	Path   string
 }
 
-func ChangedFilesSinceRemoteCommit(dir, remoteCommit string) []GitFileChange {
+func ChangedFilesSinceRemoteCommit(remoteCommit string) []GitFileChange {
 	changes := []GitFileChange{}
 	// Get all changes from git status in plain text
-	cm := fmt.Sprintf("cd %s && git diff %s --name-status", dir, remoteCommit)
+	cm := fmt.Sprintf("cd %s && git diff %s --name-status", config.Path.Root, remoteCommit)
 	raw, err := RunCommand(cm)
 	if err != nil {
 		println("Err: from command: " + cm)
@@ -45,7 +46,7 @@ func ChangedFilesSinceRemoteCommit(dir, remoteCommit string) []GitFileChange {
 	rawStatuses := strings.Split(strings.Trim(raw, "\n"), "\n")
 	// Staged files
 	if remoteCommit == "" {
-		cm = fmt.Sprintf("cd %s && git diff --name-status --staged", dir)
+		cm = fmt.Sprintf("cd %s && git diff --name-status --staged", config.Path.Root)
 		raw, err = RunCommand(cm)
 		if err != nil {
 			println("Err: from command: " + cm)
@@ -56,7 +57,7 @@ func ChangedFilesSinceRemoteCommit(dir, remoteCommit string) []GitFileChange {
 	}
 	changes = getOrdinaryChanges(rawStatuses)
 	// Get all untracked (new) files
-	cm = fmt.Sprintf("cd %s && git ls-files --others --exclude-standard", dir)
+	cm = fmt.Sprintf("cd %s && git ls-files --others --exclude-standard", config.Path.Root)
 	raw, err = RunCommand(cm)
 	if err != nil {
 		println("Err: from command: " + cm)
@@ -95,7 +96,7 @@ func IgnoreFile(file string) bool {
 	return false
 }
 
-func RemoveIfDeleted(cli inter.Cli, env Environment, change GitFileChange, root string, repo string) bool {
+func RemoveIfDeleted(cli inter.Cli, env Environment, change GitFileChange, repo string) bool {
 	if change.Status != GitStatusDeleted {
 		return false
 	}
@@ -103,7 +104,7 @@ func RemoveIfDeleted(cli inter.Cli, env Environment, change GitFileChange, root 
 	if !os.IsNotExist(err) {
 		return false
 	}
-	file := fileWithoutRoot(change.Path, root)
+	file := fileWithoutRoot(change.Path, config.Path.Root)
 	err = SendDeleteSource(cli, env, file, repo)
 	if err != nil {
 		cli.Error(err.Error())

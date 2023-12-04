@@ -44,13 +44,15 @@ func Send(cli inter.Cli, url string, body any, method string, env Environment, r
 		return "", err
 	}
 	defer res.Body.Close()
-
 	// Create response
 	responseBody, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		println("error response: " + string(responseBody))
 		return "", fmt.Errorf("error reading response body: %w", err)
 	}
+	// Use retry mechanism to wait until development containers are up and running
+	// Retries are set up to 4 times, each with a delay of 1 second
+	// If the operation is taboo longer than expected, an informative message is displayed to the user
 	if res.StatusCode == http.StatusForbidden {
 		if retry < 4 {
 			fmt.Printf("\rSetting up development services. This usually takes 5 seconds    ")

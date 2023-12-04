@@ -18,14 +18,10 @@ import (
 
 type Scanner struct {
 	RemoteCommit string
-	Root         string
 	Writer       io.Writer
 }
 
-func (w Scanner) Watch(cli inter.Cli, env services.Environment, dir string, repo string) {
-	if dir == "" {
-		dir = w.Root
-	}
+func (w Scanner) Watch(cli inter.Cli, env services.Environment, repo string) {
 	// Create new watcher.
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -35,7 +31,7 @@ func (w Scanner) Watch(cli inter.Cli, env services.Environment, dir string, repo
 	// Start listening for events.
 	go w.startListening(cli, watcher, env, repo)
 	// Add all directories to the watcher
-	w.addRecursive(watcher, dir)
+	w.addRecursive(watcher, config.Path.Root)
 	// Block main goroutine forever.
 	<-make(chan struct{})
 }
@@ -48,7 +44,7 @@ func (w Scanner) addRecursive(watcher *fsnotify.Watcher, dir string) {
 		if !d.IsDir() {
 			return err
 		}
-		if services.GitIgnored(w.Root, walkPath) {
+		if services.GitIgnored(walkPath) {
 			return nil
 		}
 		if config.App.Debug {
@@ -73,7 +69,7 @@ func (w Scanner) startListening(cli inter.Cli, watcher *fsnotify.Watcher, env se
 				log.Println("Not ok")
 				continue
 			}
-			// Ignore hidden files and directories
+			// AllTime hidden files and directories
 			if services.IgnoreFile(event.Name) {
 				continue
 			}
@@ -81,7 +77,7 @@ func (w Scanner) startListening(cli inter.Cli, watcher *fsnotify.Watcher, env se
 				continue
 			}
 			// Trim local file path
-			file := strings.ReplaceAll(event.Name, w.Root, "")
+			file := strings.ReplaceAll(event.Name, config.Path.Root, "")
 			if config.App.Debug {
 				log.Println("Modified file: ", event.Name, " Op:", event.Op)
 			}
@@ -95,8 +91,8 @@ func (w Scanner) startListening(cli inter.Cli, watcher *fsnotify.Watcher, env se
 					println("Err: SendDeleteSource:")
 					println(err.Error())
 				}
-				if services.IsHiddenFileGenerator(file) {
-					err = services.FetchHiddenFiles(cli, env, w.Root, repo)
+				if services.IsComponentFileGenerator(file) {
+					err = services.GenerateComponentFiles(cli, env, repo)
 					if err != nil {
 						cli.Error(err.Error())
 						if !errors.Is(err, services.UserError) {
@@ -114,21 +110,21 @@ func (w Scanner) startListening(cli inter.Cli, watcher *fsnotify.Watcher, env se
 				continue
 			}
 			if fileInfo.IsDir() {
-				if services.GitIgnored(w.Root, event.Name) {
+				if services.GitIgnored(event.Name) {
 					continue
 				}
 				if config.App.Debug {
 					println("Patch and watch new dir: " + event.Name)
 				}
-				services.PatchDir(cli, env, w.Root, w.RemoteCommit, w.Writer, repo)
+				services.PatchDir(cli, env, w.RemoteCommit, w.Writer, repo)
 				w.addRecursive(watcher, event.Name)
 				continue
 			}
-			patch := services.GetPatchSinceCommit(w.RemoteCommit, w.Root, file, eventIs(event, fsnotify.Create))
+			patch := services.GetPatchSinceCommit(w.RemoteCommit, file, eventIs(event, fsnotify.Create))
 
 			services.SendPatch(cli, env, file, patch, repo)
-			if services.IsHiddenFileGenerator(file) {
-				err = services.FetchHiddenFiles(cli, env, w.Root, repo)
+			if services.IsComponentFileGenerator(file) {
+				err = services.GenerateComponentFiles(cli, env, repo)
 				if err != nil {
 					cli.Error(err.Error())
 					if !errors.Is(err, services.UserError) {

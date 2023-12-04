@@ -123,9 +123,9 @@ type AppConfig struct {
 	Environments []Environment `json:"environments"`
 }
 
-func GetAppConfig(dir string) (AppConfig, error) {
+func GetAppConfig() (AppConfig, error) {
 	aConfig := AppConfig{}
-	content, err := ioutil.ReadFile(filepath.Join(dir, configFile))
+	content, err := ioutil.ReadFile(filepath.Join(config.Path.Root, configFile))
 	if err != nil {
 		return aConfig, fmt.Errorf("probably, you are not running this command in a Confetti project. Error: %s", err)
 	}
@@ -138,8 +138,8 @@ func GetAppConfig(dir string) (AppConfig, error) {
 	return aConfig, nil
 }
 
-func GetEnvironmentByInput(c inter.Cli, dir string, envKey string) (Environment, error) {
-	appConfig, err := GetAppConfig(dir)
+func GetEnvironmentByInput(c inter.Cli, envKey string) (Environment, error) {
+	appConfig, err := GetAppConfig()
 	if err != nil {
 		return Environment{}, err
 	}

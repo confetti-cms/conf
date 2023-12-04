@@ -8,6 +8,7 @@ import (
 	"src/app/services/scanner"
 	"src/config"
 	"strings"
+	"time"
 
 	"github.com/confetti-framework/errors"
 
@@ -17,7 +18,7 @@ import (
 type Watch struct {
 	Directory   string `short:"p" flag:"path" description:"Root directory of the Git repository"`
 	Verbose     bool   `short:"v" flag:"verbose" description:"Show events"`
-	Reset       bool   `short:"r" flag:"reset" description:"All files are parsed again"`
+	Reset       bool   `short:"r" flag:"reset" description:"AllTime files are parsed again"`
 	Environment string `short:"e" flag:"env" description:"The environment key in the app_config.json5 file, default 'dev'"`
 }
 
@@ -30,24 +31,25 @@ func (t Watch) Description() string {
 }
 
 func (t Watch) Handle(c inter.Cli) inter.ExitCode {
-	t.Directory = strings.TrimRight(t.Directory, "/") + "/"
+	startTime := time.Now()
 	config.App.Debug = t.Verbose
 	root, err := t.getDirectoryOrCurrent()
 	if err != nil {
 		c.Error(err.Error())
 		return inter.Failure
 	}
+	config.Path.Root = root
 	if config.App.Debug {
 		c.Info("Use directory: %s", root)
 	}
 	c.Info("Confetti watch")
-	env, err := services.GetEnvironmentByInput(c, root, t.Environment)
+	env, err := services.GetEnvironmentByInput(c, t.Environment)
 	if err != nil {
 		c.Error(err.Error())
 		return inter.Failure
 	}
 	// Get commit of the remote repository
-	remoteCommit := services.GitRemoteCommit(root)
+	remoteCommit := services.GitRemoteCommit()
 	if t.Reset {
 		c.Info("Reset all components")
 	}
@@ -66,9 +68,28 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 			return inter.Failure
 		}
 	}
-	services.PatchDir(c, env, root, remoteCommit, c.Writer(), repo)
-	// Get the standard hidden files
-	err = services.FetchHiddenFiles(c, env, root, repo)
+	services.PatchDir(c, env, remoteCommit, c.Writer(), repo)
+	// Generate the component resource files
+	err = services.GenerateComponentFiles(c, env, repo)
+	if err != nil {
+		c.Error(err.Error())
+		if !errors.Is(err, services.UserError) {
+			return inter.Failure
+		}
+	}
+	// If reset, we need to remove all local files before we place the new files
+	if t.Reset {
+		err = services.RemoveAllClientResources()
+		if err != nil {
+			c.Error(err.Error())
+			if !errors.Is(err, services.UserError) {
+				return inter.Failure
+			}
+		}
+	}
+	// If reset, we need to remove all local files before we place the new files
+	since := services.FetchResourcesSince{AllTime: t.Reset, Time: startTime}
+	err = services.FetchResources(c, env, repo, since)
 	if err != nil {
 		c.Error(err.Error())
 		if !errors.Is(err, services.UserError) {
@@ -85,9 +106,8 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	// Scan and watch next changes
 	scanner.Scanner{
 		RemoteCommit: remoteCommit,
-		Root:         root,
 		Writer:       c.Writer(),
-	}.Watch(c, env, "", repo)
+	}.Watch(c, env, repo)
 	// The watch is preventing the code from ever getting here
 	return inter.Success
 }
@@ -97,7 +117,7 @@ func (t Watch) getDirectoryOrCurrent() (string, error) {
 		if _, err := os.Stat(filepath.Join(t.Directory, ".git")); os.IsNotExist(err) {
 			return "", errors.New("The specified directory is incorrect. Please ensure that the given directory is correct.")
 		}
-		return t.Directory, nil
+		return strings.TrimRight(t.Directory, "/") + "/", nil
 	}
 	path, err := os.Getwd()
 	if err != nil {
