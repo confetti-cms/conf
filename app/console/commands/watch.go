@@ -18,7 +18,7 @@ import (
 type Watch struct {
 	Directory   string `short:"p" flag:"path" description:"Root directory of the Git repository"`
 	Verbose     bool   `short:"v" flag:"verbose" description:"Show events"`
-	Reset       bool   `short:"r" flag:"reset" description:"AllTime files are parsed again"`
+	Reset       bool   `short:"r" flag:"reset" description:"All files are parsed again"`
 	Environment string `short:"e" flag:"env" description:"The environment key in the app_config.json5 file, default 'dev'"`
 }
 
@@ -31,7 +31,10 @@ func (t Watch) Description() string {
 }
 
 func (t Watch) Handle(c inter.Cli) inter.ExitCode {
-	startTime := time.Now()
+	startTime := time.Time{}
+	if !t.Reset {
+		startTime = time.Now()
+	}
 	config.App.Debug = t.Verbose
 	root, err := t.getDirectoryOrCurrent()
 	if err != nil {
@@ -69,27 +72,7 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 		}
 	}
 	services.PatchDir(c, env, remoteCommit, c.Writer(), repo)
-	// Generate the component resource files
-	err = services.GenerateComponentFiles(c, env, repo)
-	if err != nil {
-		c.Error(err.Error())
-		if !errors.Is(err, services.UserError) {
-			return inter.Failure
-		}
-	}
-	// If reset, we need to remove all local files before we place the new files
-	if t.Reset {
-		err = services.RemoveAllClientResources()
-		if err != nil {
-			c.Error(err.Error())
-			if !errors.Is(err, services.UserError) {
-				return inter.Failure
-			}
-		}
-	}
-	// If reset, we need to remove all local files before we place the new files
-	since := services.FetchResourcesSince{AllTime: t.Reset, Time: startTime}
-	err = services.FetchResources(c, env, repo, since)
+	err = services.KeepClientResourcesInSync(c, env, repo, startTime)
 	if err != nil {
 		c.Error(err.Error())
 		if !errors.Is(err, services.UserError) {

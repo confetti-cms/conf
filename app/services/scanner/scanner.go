@@ -100,6 +100,7 @@ func (w Scanner) startListening(cli inter.Cli, watcher *fsnotify.Watcher, env se
 						}
 					}
 				}
+				services.ResourceMayHaveChanged()
 				continue
 			}
 			// Not removing
@@ -132,6 +133,7 @@ func (w Scanner) startListening(cli inter.Cli, watcher *fsnotify.Watcher, env se
 					}
 				}
 			}
+			services.ResourceMayHaveChanged()
 			ln := ""
 			if config.App.Debug {
 				ln = "\n"

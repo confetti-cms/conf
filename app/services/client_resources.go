@@ -33,8 +33,8 @@ func IsComponentFileGenerator(file string) bool {
 // GenerateComponentFiles only generate the files on the host, on an other place we fetch the resource files
 func GenerateComponentFiles(cli inter.Cli, env Environment, repo string) error {
 	// Get content of component
-	url := env.GetServiceUrl("confetti-cms/parser")
-	_, err := Send(cli, url+"/source/components", nil, http.MethodGet, env, repo)
+	host := env.GetServiceUrl("confetti-cms/parser")
+	_, err := Send(cli, host+"/source/components", nil, http.MethodGet, env, repo)
 	if err != nil {
 		return fmt.Errorf("failed to generate component files on host: %w", err)
 	}
@@ -49,19 +49,7 @@ func RemoveAllClientResources() error {
 	return nil
 }
 
-type FetchResourcesSince struct {
-	AllTime bool
-	Time    time.Time
-}
-
-func (f FetchResourcesSince) parameter() string {
-	if f.AllTime {
-		return ""
-	}
-	return "date_since=" + url.QueryEscape(f.Time.UTC().Format("2006-01-02 15:04"))
-}
-
-func FetchResources(cli inter.Cli, env Environment, repo string, since FetchResourcesSince) error {
+func FetchResources(cli inter.Cli, env Environment, repo string, since time.Time) error {
 	// Get content of component
 	files, err := getResourceFileNames(cli, env, repo, since)
 	if err != nil {
@@ -77,9 +65,9 @@ func FetchResources(cli inter.Cli, env Environment, repo string, since FetchReso
 	return nil
 }
 
-func getResourceFileNames(cli inter.Cli, env Environment, repo string, since FetchResourcesSince) ([]string, error) {
+func getResourceFileNames(cli inter.Cli, env Environment, repo string, since time.Time) ([]string, error) {
 	baseUrl := env.GetServiceUrl("confetti-cms/shared-resource")
-	content, err := Send(cli, baseUrl+"/resources?"+since.parameter(), nil, http.MethodGet, env, repo)
+	content, err := Send(cli, baseUrl+"/resources?"+sinceParameter(since), nil, http.MethodGet, env, repo)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch resource files: %w", err)
 	}
@@ -116,4 +104,11 @@ func fetchAndSaveResourceFiles(cli inter.Cli, env Environment, repo, file string
 		println("Resource fetched and saved: " + target)
 	}
 	return nil
+}
+
+func sinceParameter(t time.Time) string {
+	if t.IsZero() {
+		return ""
+	}
+	return "date_since=" + url.QueryEscape(t.UTC().Format("2006-01-02 15:04"))
 }
