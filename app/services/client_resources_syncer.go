@@ -9,11 +9,13 @@ import (
 var resourceMayHaveChanged bool
 
 func ResourceMayHaveChanged() {
-	println("----- Set resource may have changed!")
+	if config.App.Debug {
+		println("Resource may have changed")
+	}
 	resourceMayHaveChanged = true
 }
 
-func KeepClientResourcesInSync(cli inter.Cli, env Environment, repo string, since time.Time) error {
+func ManageLocalResources(cli inter.Cli, env Environment, repo string, since time.Time) error {
 	// Generate the component resource files
 	err := GenerateComponentFiles(cli, env, repo)
 	if err != nil {
@@ -24,36 +26,39 @@ func KeepClientResourcesInSync(cli inter.Cli, env Environment, repo string, sinc
 		if config.App.Debug {
 			println("Removing all local files due to reset")
 		}
-		err = RemoveAllClientResources()
+		err = RemoveAllLocalResources()
 		if err != nil {
 			return err
 		}
 	}
-	err = FetchResources(cli, env, repo, since)
-	if err != nil {
-		return err
-	}
-	// Keep the client in sync by running a background job to check on changes	
-	go syncClientResources(cli, env, repo, since)
+	go keepLocalResourcesInSync(cli, env, repo, since)
 	return nil
 }
 
-func syncClientResources(cli inter.Cli, env Environment, repo string, latestCheck time.Time) {
-	newLatestCheck := time.Now()
+func keepLocalResourcesInSync(cli inter.Cli, env Environment, repo string, checkSince time.Time) {
+	ResourceMayHaveChanged()
+	// To prevent that checkSince is the same as newCheckSince, we wait one second.
+	time.Sleep(time.Second)
+	// Keep the client in sync by running a background job to check on changes	
+	go syncClientResources(cli, env, repo, checkSince)
+}
+
+func syncClientResources(cli inter.Cli, env Environment, repo string, checkSince time.Time) {
+	newCheckSince := time.Now()
 	if !resourceMayHaveChanged {
-		time.Sleep(500 * time.Millisecond)
-		syncClientResources(cli, env, repo, newLatestCheck)
+		time.Sleep(200 * time.Millisecond)
+		syncClientResources(cli, env, repo, checkSince)
 		return
 	}
 	// Reset the flag so the resources won't be unnecessarily re-synced
 	resourceMayHaveChanged = false
 	if config.App.Debug {
-		println("----- Resources may have changed: " + latestCheck.Format(time.RFC3339))
+		println("Resources may have changed: " + checkSince.Format(time.RFC3339))
 	}
-	err := FetchResources(cli, env, repo, latestCheck)
+	err := FetchResources(cli, env, repo, checkSince)
 	if err != nil {
 		cli.Error("Error when fetching client resources: " + err.Error())
 	}
 	time.Sleep(1 * time.Second)
-	syncClientResources(cli, env, repo, newLatestCheck)
+	syncClientResources(cli, env, repo, newCheckSince)
 }

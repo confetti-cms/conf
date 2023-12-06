@@ -41,10 +41,10 @@ func GenerateComponentFiles(cli inter.Cli, env Environment, repo string) error {
 	return nil
 }
 
-func RemoveAllClientResources() error {
+func RemoveAllLocalResources() error {
 	err := os.RemoveAll(path.Join(config.Path.Root, hiddenDir))
 	if err != nil {
-		return fmt.Errorf("failed to remove all client resources: %w", err)
+		return fmt.Errorf("failed to remove all local resources: %w", err)
 	}
 	return nil
 }
@@ -67,6 +67,9 @@ func FetchResources(cli inter.Cli, env Environment, repo string, since time.Time
 
 func getResourceFileNames(cli inter.Cli, env Environment, repo string, since time.Time) ([]string, error) {
 	baseUrl := env.GetServiceUrl("confetti-cms/shared-resource")
+	if config.App.Debug {
+		fmt.Println("Fetch shared resources since: " + since.String())
+	}
 	content, err := Send(cli, baseUrl+"/resources?"+sinceParameter(since), nil, http.MethodGet, env, repo)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch resource files: %w", err)
@@ -110,5 +113,5 @@ func sinceParameter(t time.Time) string {
 	if t.IsZero() {
 		return ""
 	}
-	return "date_since=" + url.QueryEscape(t.UTC().Format("2006-01-02 15:04"))
+	return "date_since=" + url.QueryEscape(t.UTC().Format("2006-01-02 15:04:05"))
 }

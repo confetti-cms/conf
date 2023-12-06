@@ -31,9 +31,9 @@ func (t Watch) Description() string {
 }
 
 func (t Watch) Handle(c inter.Cli) inter.ExitCode {
-	startTime := time.Time{}
+	updateResourcesSince := time.Time{}
 	if !t.Reset {
-		startTime = time.Now()
+		updateResourcesSince = time.Now()
 	}
 	config.App.Debug = t.Verbose
 	root, err := t.getDirectoryOrCurrent()
@@ -72,7 +72,7 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 		}
 	}
 	services.PatchDir(c, env, remoteCommit, c.Writer(), repo)
-	err = services.KeepClientResourcesInSync(c, env, repo, startTime)
+	err = services.ManageLocalResources(c, env, repo, updateResourcesSince)
 	if err != nil {
 		c.Error(err.Error())
 		if !errors.Is(err, services.UserError) {
