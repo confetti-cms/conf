@@ -18,7 +18,7 @@ import (
 	"github.com/confetti-framework/framework/inter"
 )
 
-const hiddenDir = ".confetti"
+const sharedResourcesDir = ".confetti"
 
 // ComponentConfigSuffix
 // Actually, there should be another letter 'c' as the first letter here,
@@ -42,7 +42,7 @@ func GenerateComponentFiles(cli inter.Cli, env Environment, repo string) error {
 }
 
 func RemoveAllLocalResources() error {
-	err := os.RemoveAll(path.Join(config.Path.Root, hiddenDir))
+	err := os.RemoveAll(path.Join(config.Path.Root, sharedResourcesDir))
 	if err != nil {
 		return fmt.Errorf("failed to remove all local resources: %w", err)
 	}
@@ -55,11 +55,25 @@ func FetchResources(cli inter.Cli, env Environment, repo string, since time.Time
 	if err != nil {
 		return err
 	}
-	// Fetch and save
+	// Remove files with '.removed' suffix
 	for _, file := range files {
-		err2 := fetchAndSaveResourceFiles(cli, env, repo, file)
-		if err2 != nil {
-			return fmt.Errorf("failed to fetch and save resource files: %w", err2)
+		if strings.HasSuffix(file, ".removed") {
+			if config.App.Debug {
+				println("Remove resource file: " + file)
+			}
+			err := removeResourceFile(file)
+			if err != nil {
+				fmt.Println("can't fetch resource file: %w", err)
+			}
+		}
+	}
+	// Fetch and save the remaining files
+	for _, file := range files {
+		if !strings.HasSuffix(file, ".removed") {
+			err := fetchAndSaveResourceFiles(cli, env, repo, file)
+			if err != nil {
+				return fmt.Errorf("failed to fetch and save resource files: %w", err)
+			}
 		}
 	}
 	return nil
@@ -82,6 +96,19 @@ func getResourceFileNames(cli inter.Cli, env Environment, repo string, since tim
 	return files, nil
 }
 
+func removeResourceFile(target string) error {
+	target = strings.TrimSuffix(target, ".removed")
+	target = path.Join(config.Path.Root, sharedResourcesDir, target)
+	err := os.Remove(target)
+	if err != nil {
+		return fmt.Errorf("failed to remove file: %w", err)
+	}
+	if config.App.Debug {
+		println("File removed: " + target)
+	}
+	return nil
+}
+
 func fetchAndSaveResourceFiles(cli inter.Cli, env Environment, repo, file string) error {
 	baseUrl := env.GetServiceUrl("confetti-cms/shared-resource")
 	content, err := Send(cli, baseUrl+"/resources/content?file="+url.QueryEscape(file), nil, http.MethodGet, env, repo)
@@ -89,7 +116,7 @@ func fetchAndSaveResourceFiles(cli inter.Cli, env Environment, repo, file string
 		return fmt.Errorf("failed to fetch resource files: %w", err)
 	}
 	// Save hidden component
-	target := path.Join(config.Path.Root, hiddenDir, file)
+	target := path.Join(config.Path.Root, sharedResourcesDir, file)
 	err = os.MkdirAll(path.Dir(target), os.ModePerm)
 	if err != nil {
 		return err
