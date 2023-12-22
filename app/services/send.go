@@ -59,6 +59,7 @@ func Send(cli inter.Cli, url string, body any, method string, env Environment, r
 		} else {
 			fmt.Printf("\rOperation is taking longer than expected.                        ")
 		}
+
 		if retry == 0 {
 			errStartDevContainers := startDevContainers(env, repo)
 			if errStartDevContainers != nil {
@@ -114,6 +115,9 @@ func startDevContainers(env Environment, repository string) error {
 	jsonData := map[string]string{
 		"environment_key": env.Key,
 		"repository":      repository,
+	}
+	if config.App.Debug {
+		println("Start development POST : " + env.GetOrchestratorApi() + "/start_development with key " + env.Key + " and repository " + repository)
 	}
 	jsonValue, _ := json.Marshal(jsonData)
 	response, err := http.Post(

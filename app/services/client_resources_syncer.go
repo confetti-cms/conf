@@ -16,20 +16,20 @@ func ResourceMayHaveChanged() {
 }
 
 func ManageLocalResources(cli inter.Cli, env Environment, repo string, since time.Time) error {
-	// Generate the component resource files
-	err := GenerateComponentFiles(cli, env, repo)
-	if err != nil {
-		return err
-	}
 	// If reset, we need to remove all local files before we place the new files
 	if since.IsZero() {
 		if config.App.Debug {
 			println("Removing all local files due to reset")
 		}
-		err = RemoveAllLocalResources()
+		err := RemoveAllLocalResources()
 		if err != nil {
 			return err
 		}
+	}
+	// Generate the component resource files
+	err := GenerateComponentFiles(cli, env, repo)
+	if err != nil {
+		return err
 	}
 	go keepLocalResourcesInSync(cli, env, repo, since)
 	return nil
@@ -38,7 +38,7 @@ func ManageLocalResources(cli inter.Cli, env Environment, repo string, since tim
 func keepLocalResourcesInSync(cli inter.Cli, env Environment, repo string, checkSince time.Time) {
 	ResourceMayHaveChanged()
 	// To prevent that checkSince is the same as newCheckSince, we wait one second.
-	time.Sleep(time.Second)
+	time.Sleep(5 * time.Second)
 	// Keep the client in sync by running a background job to check on changes	
 	go syncClientResources(cli, env, repo, checkSince)
 }
@@ -55,10 +55,14 @@ func syncClientResources(cli inter.Cli, env Environment, repo string, checkSince
 	if config.App.Debug {
 		println("Resources may have changed: " + checkSince.Format(time.RFC3339))
 	}
-	err := FetchResources(cli, env, repo, checkSince)
-	if err != nil {
-		cli.Error("Error when fetching client resources: " + err.Error())
+	for i := 0; i < 10; i++ {
+		newCheckSince = time.Now()
+		err := FetchResources(cli, env, repo, checkSince)
+		if err != nil {
+			cli.Error("Error when fetching client resources: " + err.Error())
+		}
+		time.Sleep(1 * time.Second)
+		checkSince = newCheckSince
 	}
-	time.Sleep(1 * time.Second)
 	syncClientResources(cli, env, repo, newCheckSince)
 }
