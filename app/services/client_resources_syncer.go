@@ -38,7 +38,7 @@ func ManageLocalResources(cli inter.Cli, env Environment, repo string, since tim
 func keepLocalResourcesInSync(cli inter.Cli, env Environment, repo string, checkSince time.Time) {
 	ResourceMayHaveChanged()
 	// To prevent that checkSince is the same as newCheckSince, we wait one second.
-	time.Sleep(5 * time.Second)
+	time.Sleep(time.Second)
 	// Keep the client in sync by running a background job to check on changes	
 	go syncClientResources(cli, env, repo, checkSince)
 }
