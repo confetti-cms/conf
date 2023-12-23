@@ -53,7 +53,7 @@ func FetchResources(cli inter.Cli, env Environment, repo string, since time.Time
 	// Get content of component
 	files, err := getResourceFileNames(cli, env, repo, since)
 	if err != nil {
-		return err
+		return fmt.Errorf("can't fetch file names: %w", err)
 	}
 	// Remove files with '.removed' suffix
 	for _, file := range files {
@@ -89,7 +89,7 @@ func getResourceFileNames(cli inter.Cli, env Environment, repo string, since tim
 	baseUrl := env.GetServiceUrl("confetti-cms/shared-resource")
 	content, err := Send(cli, baseUrl+"/resources?"+sinceParameter(since), nil, http.MethodGet, env, repo)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch resource files: %w", err)
+		return nil, fmt.Errorf("failed to fetch resource file names: %w", err)
 	}
 	var files []string
 	json.Unmarshal([]byte(content), &files)
@@ -116,7 +116,7 @@ func fetchAndSaveResourceFiles(cli inter.Cli, env Environment, repo, file string
 	baseUrl := env.GetServiceUrl("confetti-cms/shared-resource")
 	content, err := Send(cli, baseUrl+"/resources/content?file="+url.QueryEscape(file), nil, http.MethodGet, env, repo)
 	if err != nil {
-		return fmt.Errorf("failed to fetch resource files: %w", err)
+		return fmt.Errorf("failed to fetch content of resource: %w", err)
 	}
 	// Save hidden component
 	target := path.Join(config.Path.Root, sharedResourcesDir, file)
