@@ -91,8 +91,8 @@ func (w Scanner) startListening(cli inter.Cli, watcher *fsnotify.Watcher, env se
 					println("Err: SendDeleteSource:")
 					println(err.Error())
 				}
-				if services.IsComponentFileGenerator(file) {
-					err = services.GenerateComponentFiles(cli, env, repo)
+				if services.IsBaseComponent(file) {
+					err = services.ParseBaseComponents(cli, env, repo)
 					if err != nil {
 						cli.Error(err.Error())
 						if !errors.Is(err, services.UserError) {
@@ -124,8 +124,11 @@ func (w Scanner) startListening(cli inter.Cli, watcher *fsnotify.Watcher, env se
 			patch := services.GetPatchSinceCommit(w.RemoteCommit, file, eventIs(event, fsnotify.Create))
 
 			services.SendPatch(cli, env, file, patch, repo)
-			if services.IsComponentFileGenerator(file) {
-				err = services.GenerateComponentFiles(cli, env, repo)
+			if services.IsBaseComponent(file) {
+				if config.App.Debug {
+					println("Base component is changed")
+				}
+				err = services.ParseBaseComponents(cli, env, repo)
 				if err != nil {
 					cli.Error(err.Error())
 					if !errors.Is(err, services.UserError) {

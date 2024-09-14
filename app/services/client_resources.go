@@ -7,12 +7,9 @@ import (
 	"src/config"
 	"time"
 
-	//	"encoding/base64"
-	//	"encoding/json"
 	"net/http"
 	"os"
 	"path"
-	//	"src/config"
 	"strings"
 
 	"github.com/confetti-framework/framework/inter"
@@ -20,25 +17,10 @@ import (
 
 const sharedResourcesDir = ".confetti"
 
-// ComponentConfigSuffix
-// Actually, there should be another letter 'c' as the first letter here,
-// but we don't consider it because it can be in lowercase or uppercase.
-const ComponentConfigSuffix = "omponent.blade.php"
-const ComponentClassSuffix = "omponent.class.php"
+const ComponentClassSuffix = "Component.php"
 
-func IsComponentFileGenerator(file string) bool {
-	return strings.HasSuffix(file, ComponentConfigSuffix) || strings.HasSuffix(file, ComponentClassSuffix)
-}
-
-// GenerateComponentFiles only generate the files on the host, on an other place we fetch the resource files
-func GenerateComponentFiles(cli inter.Cli, env Environment, repo string) error {
-	// Get content of component
-	host := env.GetServiceUrl("confetti-cms/parser")
-	_, err := Send(cli, host+"/source/components", nil, http.MethodGet, env, repo)
-	if err != nil {
-		return fmt.Errorf("failed to generate component files on host: %w", err)
-	}
-	return nil
+func IsBaseComponent(file string) bool {
+	return strings.HasSuffix(file, ComponentClassSuffix)
 }
 
 func RemoveAllLocalResources() error {
@@ -103,7 +85,7 @@ func removeResourceFile(target string) error {
 	target = strings.TrimSuffix(target, ".removed")
 	target = path.Join(config.Path.Root, sharedResourcesDir, target)
 	err := os.Remove(target)
-	if err != nil {
+	if err != nil && !os.IsNotExist(err) {
 		return fmt.Errorf("failed to remove file: %w", err)
 	}
 	if config.App.Debug {

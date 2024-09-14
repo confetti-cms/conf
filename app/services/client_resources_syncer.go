@@ -1,9 +1,10 @@
 package services
 
 import (
-	"github.com/confetti-framework/framework/inter"
 	"src/config"
 	"time"
+
+	"github.com/confetti-framework/framework/inter"
 )
 
 var resourceMayHaveChanged bool
@@ -15,7 +16,7 @@ func ResourceMayHaveChanged() {
 	resourceMayHaveChanged = true
 }
 
-func ManageLocalResources(cli inter.Cli, env Environment, repo string, since time.Time) error {
+func UpdateComponents(cli inter.Cli, env Environment, repo string, since time.Time) error {
 	// If reset, we need to remove all local files before we place the new files
 	if since.IsZero() {
 		if config.App.Debug {
@@ -26,11 +27,6 @@ func ManageLocalResources(cli inter.Cli, env Environment, repo string, since tim
 			return err
 		}
 	}
-	// Generate the component resource files
-	err := GenerateComponentFiles(cli, env, repo)
-	if err != nil {
-		return err
-	}
 	go keepLocalResourcesInSync(cli, env, repo, since)
 	return nil
 }
@@ -39,7 +35,7 @@ func keepLocalResourcesInSync(cli inter.Cli, env Environment, repo string, check
 	ResourceMayHaveChanged()
 	// To prevent that checkSince is the same as newCheckSince, we wait one second.
 	time.Sleep(time.Second)
-	// Keep the client in sync by running a background job to check on changes	
+	// Keep the client in sync by running a background job to check on changes
 	go syncClientResources(cli, env, repo, checkSince)
 }
 

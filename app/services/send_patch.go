@@ -24,10 +24,11 @@ var wg sync.WaitGroup
 
 const maxChanges = 100
 
-func PatchDir(cli inter.Cli, env Environment, remoteCommit string, writer io.Writer, repo string) {
+func PatchDir(cli inter.Cli, env Environment, remoteCommit string, writer io.Writer, repo string) []string {
 	// Get patches since latest remote commits
 	changes := ChangedFilesSinceRemoteCommit(remoteCommit)
 	changes = IgnoreHidden(changes)
+	changesFiles := []string{}
 	// Do not allow too many changes
 	if len(changes) > maxChanges {
 		cli.Error("Too many changes. Use .gitignore to ignore libraries or commit and push your changes before running this command.")
@@ -38,6 +39,7 @@ func PatchDir(cli inter.Cli, env Environment, remoteCommit string, writer io.Wri
 	wg.Add(len(changes))
 	for _, change := range changes {
 		change := change
+		changesFiles = append(changesFiles, change.Path)
 		go func() {
 			defer wg.Done()
 			removed := RemoveIfDeleted(cli, env, change, repo)
@@ -59,6 +61,7 @@ func PatchDir(cli inter.Cli, env Environment, remoteCommit string, writer io.Wri
 	}
 	// Wait for the goroutines to finish.
 	wg.Wait()
+	return changesFiles
 }
 
 func SendPatch(cli inter.Cli, env Environment, path, patch string, repo string) {

@@ -42,6 +42,7 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 		return inter.Failure
 	}
 	config.Path.Root = root
+	filesToSync := []string{}
 	if config.App.Debug {
 		c.Info("Use directory: %s", root)
 	}
@@ -51,8 +52,10 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 		c.Error(err.Error())
 		return inter.Failure
 	}
+
 	// Get commit of the remote repository
-	remoteCommit := services.GitRemoteCommit()
+	c.Info("Pull remote commit")
+	remoteCommit := services.GetGitRemoteCommit()
 	if t.Reset {
 		c.Info("Reset all components")
 	}
@@ -61,6 +64,9 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 		c.Error(err.Error())
 		return inter.Failure
 	}
+
+	// Checkout the repository
+	c.Info("Remote checkout")
 	err = services.SendCheckout(c, env, services.CheckoutBody{
 		Commit: remoteCommit,
 		Reset:  t.Reset,
@@ -71,21 +77,49 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 			return inter.Failure
 		}
 	}
-	services.PatchDir(c, env, remoteCommit, c.Writer(), repo)
-	err = services.ManageLocalResources(c, env, repo, updateResourcesSince)
+
+	// Apply all local changes
+	filesToSync = services.PatchDir(c, env, remoteCommit, c.Writer(), repo)
+	// Remove loading bar
+	fmt.Printf("\r                                                                      ")
+
+	// Parse all base components (other components wil extend this components)
+	c.Info("Parse base components")
+	err = services.ParseBaseComponents(c, env, repo)
 	if err != nil {
 		c.Error(err.Error())
 		if !errors.Is(err, services.UserError) {
 			return inter.Failure
 		}
 	}
-	// Remove loading bar
-	fmt.Printf("\r                                                                      ")
+
+	// Parse components
+	c.Info("Parse components")
+	for _, file := range filesToSync {
+		err = services.ParseComponent(c, env, services.ParseComponentBody{File: file}, repo)
+		if err != nil {
+			c.Error(err.Error())
+			if !errors.Is(err, services.UserError) {
+				return inter.Failure
+			}
+		}
+	}
+
+	// Generate and download the components
+	c.Info("Download and update components")
+	err = services.UpdateComponents(c, env, repo, updateResourcesSince)
+	if err != nil {
+		c.Error(err.Error())
+		if !errors.Is(err, services.UserError) {
+			return inter.Failure
+		}
+	}
 	c.Line("")
 	for _, host := range env.GetExplicitHosts() {
 		c.Info("Website: http://%s", host)
 		c.Info("Admin: http://%s%s\n", host, "/admin")
 	}
+
 	// Scan and watch next changes
 	scanner.Scanner{
 		RemoteCommit: remoteCommit,

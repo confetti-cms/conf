@@ -61,7 +61,7 @@ func GitIgnored(dir string) bool {
 	return true
 }
 
-func GitRemoteCommit() string {
+func GetGitRemoteCommit() string {
 	cmd := "cd " + config.Path.Root + " && git for-each-ref refs/remotes/origin --count 1 --format \"%(objectname)\""
 	out, err := RunCommand(cmd)
 	if err != nil {

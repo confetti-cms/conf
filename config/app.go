@@ -1,10 +1,11 @@
 package config
 
 import (
-	"github.com/confetti-framework/framework/support/env"
-	"golang.org/x/text/language"
 	"os"
 	"time"
+
+	"github.com/confetti-framework/framework/support/env"
+	"golang.org/x/text/language"
 )
 
 var App = struct {

@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"src/config"
 	"time"
+
+	"io"
 
 	"github.com/confetti-framework/errors"
 	"github.com/confetti-framework/framework/inter"
@@ -45,7 +46,7 @@ func Send(cli inter.Cli, url string, body any, method string, env Environment, r
 	}
 	defer res.Body.Close()
 	// Create response
-	responseBody, err := ioutil.ReadAll(res.Body)
+	responseBody, err := io.ReadAll(io.Reader(res.Body))
 	if err != nil {
 		println("error response: " + string(responseBody))
 		return "", fmt.Errorf("error reading response body: %w", err)
@@ -125,15 +126,16 @@ func startDevContainers(env Environment, repository string) error {
 		"application/json",
 		bytes.NewBuffer(jsonValue),
 	)
-	defer response.Body.Close()
 	if err != nil {
 		bodyString := ""
-		if response.Body != nil {
-			bodyBytes, _ := ioutil.ReadAll(response.Body)
+		if response != nil && response.Body != nil {
+			bodyBytes, _ := io.ReadAll(io.Reader(response.Body))
 			bodyString = string(bodyBytes)
+			response.Body.Close()
 		}
 		return fmt.Errorf("error: %v, response: %s", err, bodyString)
 	}
+	defer response.Body.Close()
 
 	return nil
 }
