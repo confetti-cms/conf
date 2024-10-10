@@ -131,11 +131,18 @@ func (w Scanner) startListening(cli inter.Cli, watcher *fsnotify.Watcher, env se
 				err = services.ParseBaseComponents(cli, env, repo)
 				if err != nil {
 					cli.Error(err.Error())
-					if !errors.Is(err, services.UserError) {
-						log.Fatal(err)
-					}
 				}
 			}
+
+			// Parse components
+			err = services.ParseComponent(cli, env, services.ParseComponentBody{File: file}, repo)
+			if err != nil {
+				cli.Error(err.Error())
+				if !errors.Is(err, services.UserError) {
+					log.Fatal(err)
+				}
+			}
+
 			services.ResourceMayHaveChanged()
 			ln := ""
 			if config.App.Debug {

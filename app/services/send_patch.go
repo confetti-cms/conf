@@ -22,7 +22,7 @@ type PatchBody struct {
 // WaitGroup is used to wait for the program to finish goroutines.
 var wg sync.WaitGroup
 
-const maxChanges = 100
+const maxChanges = 300
 
 func PatchDir(cli inter.Cli, env Environment, remoteCommit string, writer io.Writer, repo string) []string {
 	// Get patches since latest remote commits
@@ -35,13 +35,14 @@ func PatchDir(cli inter.Cli, env Environment, remoteCommit string, writer io.Wri
 		os.Exit(1)
 	}
 	// Send patches since latest remote commits
-	bar := getBar(len(changes)*2, "Sync local changes with Confetti", writer)
+	bar := getBar(len(changes)*3, "Sync local changes with Confetti", writer)
 	wg.Add(len(changes))
 	for _, change := range changes {
 		change := change
 		changesFiles = append(changesFiles, change.Path)
 		go func() {
 			defer wg.Done()
+			_ = bar.Add(1)
 			removed := RemoveIfDeleted(cli, env, change, repo)
 			if removed {
 				if config.App.Debug {

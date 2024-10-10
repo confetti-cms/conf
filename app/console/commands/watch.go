@@ -54,11 +54,7 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	}
 
 	// Get commit of the remote repository
-	c.Info("Pull remote commit")
 	remoteCommit := services.GetGitRemoteCommit()
-	if t.Reset {
-		c.Info("Reset all components")
-	}
 	repo, err := services.GetRepositoryName(root)
 	if err != nil {
 		c.Error(err.Error())
@@ -66,7 +62,7 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	}
 
 	// Checkout the repository
-	c.Info("Remote checkout")
+	fmt.Printf("Sync files...                                                         ")
 	err = services.SendCheckout(c, env, services.CheckoutBody{
 		Commit: remoteCommit,
 		Reset:  t.Reset,
@@ -84,7 +80,6 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	fmt.Printf("\r                                                                      ")
 
 	// Parse all base components (other components wil extend this components)
-	c.Info("Parse base components")
 	err = services.ParseBaseComponents(c, env, repo)
 	if err != nil {
 		c.Error(err.Error())
@@ -94,7 +89,6 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	}
 
 	// Parse components
-	c.Info("Parse components")
 	for _, file := range filesToSync {
 		err = services.ParseComponent(c, env, services.ParseComponentBody{File: file}, repo)
 		if err != nil {
@@ -106,7 +100,6 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	}
 
 	// Generate and download the components
-	c.Info("Download and update components")
 	err = services.UpdateComponents(c, env, repo, updateResourcesSince)
 	if err != nil {
 		c.Error(err.Error())
