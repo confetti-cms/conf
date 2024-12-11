@@ -107,6 +107,7 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 			return inter.Failure
 		}
 	}
+
 	c.Line("")
 	for _, host := range env.GetExplicitHosts() {
 		c.Info("Website: http://%s", host)

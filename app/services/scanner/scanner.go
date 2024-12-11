@@ -118,10 +118,20 @@ func (w Scanner) startListening(cli inter.Cli, watcher *fsnotify.Watcher, env se
 					println("Patch and watch new dir: " + event.Name)
 				}
 				services.PatchDir(cli, env, w.RemoteCommit, w.Writer, repo)
+				// Remove loading bar
+				fmt.Printf("\r                                                                      ")
+
 				w.addRecursive(watcher, event.Name)
 				continue
 			}
-			patch := services.GetPatchSinceCommit(w.RemoteCommit, file, eventIs(event, fsnotify.Create))
+
+			patch, err := services.GetPatchSinceCommitE(w.RemoteCommit, file, eventIs(event, fsnotify.Create))
+			if patch == "" || err != nil {
+				if err != services.ErrNewFileEmptyPatch {
+					println("Err: get patch when scanner start listening: " + err.Error())
+				}
+				continue
+			}
 
 			services.SendPatch(cli, env, file, patch, repo)
 			if services.IsBaseComponent(file) {
@@ -143,7 +153,9 @@ func (w Scanner) startListening(cli inter.Cli, watcher *fsnotify.Watcher, env se
 				}
 			}
 
+			// Set the flag that the resources may have changed
 			services.ResourceMayHaveChanged()
+
 			ln := ""
 			if config.App.Debug {
 				ln = "\n"

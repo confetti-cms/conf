@@ -14,9 +14,8 @@ import (
 )
 
 type PatchBody struct {
-	Path      string `json:"path"`
-	Patch     string `json:"patch"`
-	Untracked bool   `json:"is_untracked"`
+	Path  string `json:"path"`
+	Patch string `json:"patch"`
 }
 
 // WaitGroup is used to wait for the program to finish goroutines.
@@ -54,7 +53,14 @@ func PatchDir(cli inter.Cli, env Environment, remoteCommit string, writer io.Wri
 			if config.App.Debug {
 				println("Patch file: " + change.Path)
 			}
-			patch := GetPatchSinceCommit(remoteCommit, change.Path, change.Status == GitStatusAdded)
+			patch, err := GetPatchSinceCommit(remoteCommit, change.Path, change.Status == GitStatusAdded)
+			if err != nil {
+				_ = bar.Add(2)
+				if err != ErrNewFileEmptyPatch {
+					println("Err: get patch when patch dir: " + err.Error())
+				}
+				return
+			}
 			_ = bar.Add(1)
 			SendPatch(cli, env, change.Path, patch, repo)
 			_ = bar.Add(1)
