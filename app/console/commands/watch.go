@@ -19,7 +19,7 @@ type Watch struct {
 	Directory   string `short:"p" flag:"path" description:"Root directory of the Git repository"`
 	Verbose     bool   `short:"v" flag:"verbose" description:"Show events"`
 	Reset       bool   `short:"r" flag:"reset" description:"All files are parsed again"`
-	Environment string `short:"e" flag:"env" description:"The environment key in the app_config.json5 file, default 'dev'"`
+	Environment string `short:"n" flag:"name" description:"The environment name in the app_config.json5 file, default 'dev'"`
 }
 
 func (t Watch) Name() string {

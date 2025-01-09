@@ -61,6 +61,13 @@ func PatchDir(cli inter.Cli, env Environment, remoteCommit string, writer io.Wri
 				}
 				return
 			}
+			if patch == "" {
+				_ = bar.Add(2)
+				if config.App.Debug {
+					println("Patch is empty !!! file: " + change.Path)
+				}
+				return
+			}
 			_ = bar.Add(1)
 			SendPatch(cli, env, change.Path, patch, repo)
 			_ = bar.Add(1)

@@ -12,7 +12,6 @@ import (
 
 	"github.com/confetti-framework/errors"
 	"github.com/confetti-framework/framework/inter"
-	"github.com/spf13/cast"
 )
 
 var UserError = errors.New("something went wrong, you can probably adjust it yourself to fix it")
@@ -93,10 +92,9 @@ func Send(cli inter.Cli, url string, body any, method string, env Environment, r
 			title := errs[0].(map[string]any)["title"].(string)
 			return string(responseBody), fmt.Errorf("%w: %s", UserError, title)
 		}
-		err := errors.New(
-			"error with status: " + cast.ToString(res.StatusCode) +
-				" with request: " + method + " " + url +
-				" and response: " + string(responseBody),
+		err := fmt.Errorf(
+			"error with status: %d with request: %s %s and response: %s",
+			res.StatusCode, method, url, string(responseBody),
 		)
 		return string(responseBody), err
 	}
@@ -114,11 +112,11 @@ func debugRequest(method string, url string, payload string) {
 
 func startDevContainers(env Environment, repository string) error {
 	jsonData := map[string]string{
-		"environment_key": env.Key,
-		"repository":      repository,
+		"environment_name": env.Name,
+		"repository":       repository,
 	}
 	if config.App.Debug {
-		println("Start development POST : " + env.GetOrchestratorApi() + "/start_development with key " + env.Key + " and repository " + repository)
+		println("Start development POST : " + env.GetOrchestratorApi() + "/start_development with name " + env.Name + " and repository " + repository)
 	}
 	jsonValue, _ := json.Marshal(jsonData)
 	response, err := http.Post(

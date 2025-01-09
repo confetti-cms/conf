@@ -18,10 +18,9 @@ type Hosts []string
 type Paths []string
 
 type ContainerConfig struct {
-	Name             string `json:"name"`
-	Hosts            Hosts  `json:"hosts"`
-	Paths            Paths  `json:"paths"`
-	UserServiceInUri bool   `json:"user_service_in_uri"`
+	Name  string `json:"name"`
+	Hosts Hosts  `json:"hosts"`
+	Paths Paths  `json:"paths"`
 }
 
 func (c *ContainerConfig) GetAllURLCombinations(defaultUri string) []string {
@@ -44,7 +43,7 @@ const OrchestratorApiDefault = "http://api.confetti-cms.com/orchestrator"
 const OrchestratorApiLocalhost = "http://api.confetti-cms.localhost/orchestrator"
 
 type Environment struct {
-	Key            string            `json:"key"`
+	Name           string            `json:"name"`
 	RunOnLocalhost bool              `json:"run_on_localhost"`
 	Containers     []ContainerConfig `json:"containers"`
 }
@@ -111,10 +110,8 @@ func getUriByAlias(cConfig ContainerConfig, service string) string {
 		// For now, we only support 1 path max
 		uri += "/" + strings.TrimLeft(cConfig.Paths[0], "/")
 	}
-	if cConfig.UserServiceInUri {
-		// For now, we only support 1 suffix path max
-		uri += "/" + service
-	}
+	// Replace __SERVICE__ with the service name
+	uri = strings.ReplaceAll(uri, "__SERVICE__", service)
 
 	return strings.TrimRight(uri, "/")
 }
@@ -138,29 +135,29 @@ func GetAppConfig() (AppConfig, error) {
 	return aConfig, nil
 }
 
-func GetEnvironmentByInput(c inter.Cli, envKey string) (Environment, error) {
+func GetEnvironmentByInput(c inter.Cli, envName string) (Environment, error) {
 	appConfig, err := GetAppConfig()
 	if err != nil {
 		return Environment{}, err
 	}
-	keys := []string{}
+	names := []string{}
 	for _, environment := range appConfig.Environments {
-		keys = append(keys, environment.Key)
+		names = append(names, environment.Name)
 	}
-	if len(keys) == 1 {
+	if len(names) == 1 {
 		return appConfig.Environments[0], nil
 	}
-	if envKey == "" {
-		envKey = c.Choice("Choose your environment", keys...)
+	if envName == "" {
+		envName = c.Choice("Choose your environment", names...)
 	}
 	for _, environment := range appConfig.Environments {
-		if environment.Key == envKey {
+		if environment.Name == envName {
 			if config.App.Debug {
-				fmt.Println("Environment key is:", envKey)
+				fmt.Println("Environment name is:", envName)
 			}
 			return environment, nil
 		}
 	}
 
-	return Environment{}, fmt.Errorf("the key %s does not match any environment. Available keys are %s", envKey, strings.Join(keys, ", "))
+	return Environment{}, fmt.Errorf("the name %s does not match any environment. Available names are %s", envName, strings.Join(names, ", "))
 }

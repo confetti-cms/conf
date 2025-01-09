@@ -126,9 +126,15 @@ func (w Scanner) startListening(cli inter.Cli, watcher *fsnotify.Watcher, env se
 			}
 
 			patch, err := services.GetPatchSinceCommitE(w.RemoteCommit, file, eventIs(event, fsnotify.Create))
-			if patch == "" || err != nil {
+			if err != nil {
 				if err != services.ErrNewFileEmptyPatch {
 					println("Err: get patch when scanner start listening: " + err.Error())
+				}
+				continue
+			}
+			if patch == "" {
+				if config.App.Debug {
+					println("Patch is empty !!! file: " + file)
 				}
 				continue
 			}
