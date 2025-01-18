@@ -73,7 +73,7 @@ func Send(cli inter.Cli, url string, body any, method string, env Environment, r
 	if res.StatusCode == http.StatusBadGateway {
 		// Override previous message with spaces
 		fmt.Printf("\rDevelopment services are almost available. We'll be done in 3 seconds")
-		if config.App.Debug {
+		if config.App.VeryVerbose {
 			fmt.Println("Body:", string(responseBody))
 		}
 		time.Sleep(1 * time.Second)
@@ -102,7 +102,7 @@ func Send(cli inter.Cli, url string, body any, method string, env Environment, r
 }
 
 func debugRequest(method string, url string, payload string) {
-	if config.App.Debug {
+	if config.App.VeryVerbose {
 		if len(payload) > 300 {
 			payload = payload[:300] + "(...)"
 		}
@@ -115,7 +115,7 @@ func startDevContainers(env Environment, repository string) error {
 		"environment_name": env.Name,
 		"repository":       repository,
 	}
-	if config.App.Debug {
+	if config.App.VeryVerbose {
 		println("Start development POST : " + env.GetOrchestratorApi() + "/start_development with name " + env.Name + " and repository " + repository)
 	}
 	jsonValue, _ := json.Marshal(jsonData)

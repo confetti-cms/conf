@@ -10,7 +10,7 @@ import (
 var resourceMayHaveChanged bool
 
 func ResourceMayHaveChanged() {
-	if config.App.Debug {
+	if config.App.VeryVerbose {
 		println("Resource may have changed")
 	}
 	resourceMayHaveChanged = true
@@ -19,7 +19,7 @@ func ResourceMayHaveChanged() {
 func UpdateComponents(cli inter.Cli, env Environment, repo string, since time.Time) error {
 	// If reset, we need to remove all local files before we place the new files
 	if since.IsZero() {
-		if config.App.Debug {
+		if config.App.VeryVerbose {
 			println("Removing all local files due to reset")
 		}
 		err := RemoveAllLocalResources()
@@ -48,7 +48,7 @@ func syncClientResources(cli inter.Cli, env Environment, repo string, checkSince
 	}
 	// Reset the flag so the resources won't be unnecessarily re-synced
 	resourceMayHaveChanged = false
-	if config.App.Debug {
+	if config.App.VeryVerbose {
 		println("Resources may have changed: " + checkSince.Format(time.RFC3339))
 	}
 	for i := 0; i < 10; i++ {

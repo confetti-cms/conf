@@ -13,7 +13,7 @@ func RunCommand(command string) (string, error) {
 }
 
 func debugCommand(command string, outR []byte) {
-	if config.App.Debug {
+	if config.App.VeryVerbose {
 		out := string(outR)
 		if len(out) > 400 {
 			out = out[:400] + "(...)"

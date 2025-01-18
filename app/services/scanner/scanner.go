@@ -13,6 +13,8 @@ import (
 	"time"
 
 	"github.com/confetti-framework/framework/inter"
+
+	// We can't/don't want to use radovskyb/watcher. It is unreliable and gives event CREATED for files that are not created. We use fsnotify/fsnotify instead.
 	"github.com/fsnotify/fsnotify"
 )
 
@@ -37,27 +39,49 @@ func (w Scanner) Watch(cli inter.Cli, env services.Environment, repo string) {
 }
 
 func (w Scanner) addRecursive(watcher *fsnotify.Watcher, dir string) {
-	err := filepath.WalkDir(dir, func(walkPath string, d os.DirEntry, err error) error {
+	// Do not use filepath.WalkDir. WalkDir will give all the directories and files in the directory.
+	// When the project has vendor directories, it is not efficient to check all the directories if they has to be watched.
+	// Better we go through the directory tree ourselves. That seems mutch more efficient.
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		log.Fatalf("Failed to read directory %s: %v", dir, err)
+	}
+
+	for _, entry := range entries {
+		walkPath := filepath.Join(dir, entry.Name())
+
+		// Ignore files based on services.IgnoreFile
 		if services.IgnoreFile(walkPath) {
-			return nil
+			continue
 		}
-		if !d.IsDir() {
-			return err
+
+		// Skip if entry is not a directory
+		if !entry.IsDir() {
+			continue
 		}
+
+		// Skip Git-ignored directories
 		if services.GitIgnored(walkPath) {
-			return nil
+			println("Ignore by Gitignore directory: " + walkPath)
+			continue
 		}
-		if config.App.Debug {
+
+		// Log the directory being watched if verbose mode is enabled
+		if config.App.Verbose {
 			println("Watch directory: " + walkPath)
 		}
-		err = watcher.Add(walkPath)
+
+		// Add the directory to the watcher
+		err := watcher.Add(walkPath)
 		if err != nil {
-			return err
+			log.Fatalf("Failed to add directory %s to watcher: %v", walkPath, err)
 		}
-		return nil
-	})
-	if err != nil {
-		log.Fatal(err)
+
+		// Recursive call for subdirectories
+		if config.App.Verbose {
+			println("Recursive add: " + walkPath)
+		}
+		w.addRecursive(watcher, walkPath)
 	}
 }
 
@@ -78,12 +102,12 @@ func (w Scanner) startListening(cli inter.Cli, watcher *fsnotify.Watcher, env se
 			}
 			// Trim local file path
 			file := strings.ReplaceAll(event.Name, config.Path.Root, "")
-			if config.App.Debug {
+			if config.App.VeryVerbose {
 				log.Println("Modified file: ", event.Name, " Op:", event.Op)
 			}
 			// Removed (by removing or renaming)
 			if eventIs(event, fsnotify.Rename) || eventIs(event, fsnotify.Remove) {
-				if config.App.Debug {
+				if config.App.VeryVerbose {
 					println("Send delete Source: " + file)
 				}
 				err := services.SendDeleteSource(cli, env, file, repo)
@@ -114,7 +138,7 @@ func (w Scanner) startListening(cli inter.Cli, watcher *fsnotify.Watcher, env se
 				if services.GitIgnored(event.Name) {
 					continue
 				}
-				if config.App.Debug {
+				if config.App.Verbose {
 					println("Patch and watch new dir: " + event.Name)
 				}
 				services.PatchDir(cli, env, w.RemoteCommit, w.Writer, repo)
@@ -133,15 +157,15 @@ func (w Scanner) startListening(cli inter.Cli, watcher *fsnotify.Watcher, env se
 				continue
 			}
 			if patch == "" {
-				if config.App.Debug {
-					println("Patch is empty !!! file: " + file)
+				if config.App.Verbose {
+					println("Patch is empty in startListening !!! file: " + file)
 				}
 				continue
 			}
 
 			services.SendPatch(cli, env, file, patch, repo)
 			if services.IsBaseComponent(file) {
-				if config.App.Debug {
+				if config.App.VeryVerbose {
 					println("Base component is changed")
 				}
 				err = services.ParseBaseComponents(cli, env, repo)
@@ -163,7 +187,7 @@ func (w Scanner) startListening(cli inter.Cli, watcher *fsnotify.Watcher, env se
 			services.ResourceMayHaveChanged()
 
 			ln := ""
-			if config.App.Debug {
+			if config.App.Verbose {
 				ln = "\n"
 			}
 			fmt.Printf("\rLatest sync: %s \033[1;34m%s\033[0m                              %s", time.Now().Format("2006-01-02 15:04:05"), file, ln)
@@ -171,7 +195,7 @@ func (w Scanner) startListening(cli inter.Cli, watcher *fsnotify.Watcher, env se
 			if !ok {
 				continue
 			}
-			log.Println("error: ", err)
+			log.Println("error watching:", err)
 		}
 	}
 }

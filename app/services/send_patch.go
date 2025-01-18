@@ -44,13 +44,13 @@ func PatchDir(cli inter.Cli, env Environment, remoteCommit string, writer io.Wri
 			_ = bar.Add(1)
 			removed := RemoveIfDeleted(cli, env, change, repo)
 			if removed {
-				if config.App.Debug {
+				if config.App.VeryVerbose {
 					println("File removed: " + change.Path)
 				}
 				_ = bar.Add(2)
 				return
 			}
-			if config.App.Debug {
+			if config.App.VeryVerbose {
 				println("Patch file: " + change.Path)
 			}
 			patch, err := GetPatchSinceCommit(remoteCommit, change.Path, change.Status == GitStatusAdded)
@@ -63,8 +63,8 @@ func PatchDir(cli inter.Cli, env Environment, remoteCommit string, writer io.Wri
 			}
 			if patch == "" {
 				_ = bar.Add(2)
-				if config.App.Debug {
-					println("Patch is empty !!! file: " + change.Path)
+				if config.App.VeryVerbose {
+					println("Patch is empty in PatchDir!!! file: " + change.Path)
 				}
 				return
 			}
@@ -88,7 +88,7 @@ func SendPatch(cli inter.Cli, env Environment, path, patch string, repo string) 
 		}
 		return
 	}
-	if config.App.Debug {
+	if config.App.VeryVerbose {
 		println("Patch send: " + path)
 	}
 }
@@ -98,7 +98,7 @@ func SendPatchE(cli inter.Cli, env Environment, path, patch string, repo string)
 		Path:  path,
 		Patch: patch,
 	}
-	if config.App.Debug {
+	if config.App.VeryVerbose {
 		println("Patch sending:", path)
 	}
 	url := env.GetServiceUrl("confetti-cms/parser")
@@ -110,7 +110,7 @@ func getBar(total int, description string, writer io.Writer) *progressbar.Progre
 	if total == 0 {
 		return nil
 	}
-	if config.App.Debug {
+	if config.App.VeryVerbose {
 		// AllTime progressbar in verbose mode
 		writer = io.Discard
 	}

@@ -40,14 +40,14 @@ func FetchResources(cli inter.Cli, env Environment, repo string, since time.Time
 	// Remove files with '.removed' suffix
 	for _, file := range files {
 		if strings.HasSuffix(file, ".removed") {
-			if config.App.Debug {
+			if config.App.VeryVerbose {
 				println("Remove resource file: " + file)
 			}
 			err := removeResourceFile(file)
 			if err != nil {
 				fmt.Println("can't fetch resource file: %w", err)
 			}
-			if config.App.Debug {
+			if config.App.VeryVerbose {
 				fmt.Printf("file removed: %s\n", file)
 			}
 		}
@@ -59,7 +59,7 @@ func FetchResources(cli inter.Cli, env Environment, repo string, since time.Time
 			if err != nil {
 				return fmt.Errorf("failed to fetch and save resource files: %w", err)
 			}
-			if config.App.Debug {
+			if config.App.VeryVerbose {
 				fmt.Printf("file saved: %s\n", file)
 			}
 		}
@@ -88,7 +88,7 @@ func removeResourceFile(target string) error {
 	if err != nil && !os.IsNotExist(err) {
 		return fmt.Errorf("failed to remove file: %w", err)
 	}
-	if config.App.Debug {
+	if config.App.VeryVerbose {
 		println("File removed: " + target)
 	}
 	return nil
@@ -115,7 +115,7 @@ func fetchAndSaveResourceFiles(cli inter.Cli, env Environment, repo, file string
 	if err != nil {
 		return err
 	}
-	if config.App.Debug {
+	if config.App.VeryVerbose {
 		println("Resource fetched and saved: " + target)
 	}
 	return nil

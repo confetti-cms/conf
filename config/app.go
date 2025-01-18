@@ -13,11 +13,12 @@ var App = struct {
 	LineSeparator,
 	Key,
 	Env string
-	OsArgs   []string
-	Port     int
-	Cipher   string
-	Debug    bool
-	Timezone *time.Location
+	OsArgs      []string
+	Port        int
+	Cipher      string
+	Verbose     bool
+	VeryVerbose bool
+	Timezone    *time.Location
 	Locale,
 	FallbackLocale,
 	FakerLocale language.Tag
@@ -92,7 +93,7 @@ var App = struct {
 	   | application. If disabled, a simple generic error page is shown.
 	   |
 	*/
-	Debug: env.BoolOr("APP_DEBUG", false),
+	VeryVerbose: env.BoolOr("APP_DEBUG", false),
 
 	/*
 		|--------------------------------------------------------------------------

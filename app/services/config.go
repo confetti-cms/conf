@@ -152,7 +152,7 @@ func GetEnvironmentByInput(c inter.Cli, envName string) (Environment, error) {
 	}
 	for _, environment := range appConfig.Environments {
 		if environment.Name == envName {
-			if config.App.Debug {
+			if config.App.VeryVerbose {
 				fmt.Println("Environment name is:", envName)
 			}
 			return environment, nil

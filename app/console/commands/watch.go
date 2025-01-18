@@ -18,6 +18,7 @@ import (
 type Watch struct {
 	Directory   string `short:"p" flag:"path" description:"Root directory of the Git repository"`
 	Verbose     bool   `short:"v" flag:"verbose" description:"Show events"`
+	VeryVerbose bool   `short:"vv" flag:"very-verbose" description:"Show all events"`
 	Reset       bool   `short:"r" flag:"reset" description:"All files are parsed again"`
 	Environment string `short:"n" flag:"name" description:"The environment name in the app_config.json5 file, default 'dev'"`
 }
@@ -35,15 +36,15 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	if !t.Reset {
 		updateResourcesSince = time.Now()
 	}
-	config.App.Debug = t.Verbose
+	config.App.Verbose = t.Verbose || t.VeryVerbose
+	config.App.VeryVerbose = t.VeryVerbose
 	root, err := t.getDirectoryOrCurrent()
 	if err != nil {
 		c.Error(err.Error())
 		return inter.Failure
 	}
 	config.Path.Root = root
-	filesToSync := []string{}
-	if config.App.Debug {
+	if config.App.Verbose {
 		c.Info("Use directory: %s", root)
 	}
 	c.Info("Confetti watch")
@@ -75,7 +76,7 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	}
 
 	// Apply all local changes
-	filesToSync = services.PatchDir(c, env, remoteCommit, c.Writer(), repo)
+	filesToSync := services.PatchDir(c, env, remoteCommit, c.Writer(), repo)
 	// Remove loading bar
 	fmt.Printf("\r                                                                      ")
 

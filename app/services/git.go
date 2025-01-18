@@ -21,7 +21,7 @@ func GetRepositoryName(root string) (string, error) {
 	}
 	output = strings.TrimSpace(output)
 	result, err := GetRepositoryNameByOriginUrl(output)
-	if config.App.Debug {
+	if config.App.VeryVerbose {
 		fmt.Printf("Current repository: %s", result)
 	}
 	return result, err

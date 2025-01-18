@@ -9,7 +9,7 @@ import (
 var ErrNewFileEmptyPatch = fmt.Errorf("Patch is empty. This may be due to the editor. They may have created a new file and edit it directly. So the first patch is empty.")
 
 func GetPatchSinceCommit(commit, path string, isNew bool) (string, error) {
-	if config.App.Debug {
+	if config.App.VeryVerbose {
 		println("Create patch: " + path)
 	}
 	return GetPatchSinceCommitE(commit, path, isNew)
@@ -31,6 +31,7 @@ func GetPatchSinceCommitE(commit, file string, isNew bool) (string, error) {
 	if strings.Trim(out, "\n") != "" || !isNew {
 		return out, err
 	}
+
 	// If no results; get untracked changes
 	st = fmt.Sprintf("cd %s && git diff %s -- /dev/null %s", config.Path.Root, binaryFlag, file)
 	out, _ = RunCommand(st)
