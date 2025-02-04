@@ -120,6 +120,7 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 		RemoteCommit: remoteCommit,
 		Writer:       c.Writer(),
 	}.Watch(c, env, repo)
+
 	// The watch is preventing the code from ever getting here
 	return inter.Success
 }

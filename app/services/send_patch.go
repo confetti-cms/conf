@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -61,12 +62,8 @@ func PatchDir(cli inter.Cli, env Environment, remoteCommit string, writer io.Wri
 				}
 				return
 			}
-			if patch == "" {
-				_ = bar.Add(2)
-				if config.App.VeryVerbose {
-					println("Patch is empty in PatchDir!!! file: " + change.Path)
-				}
-				return
+			if patch == "" && config.App.VeryVerbose {
+				fmt.Printf("Warning: patch is empty in PatchDir, file: %s, this is fine if the user undo all changes in a file\n", change.Path)
 			}
 			_ = bar.Add(1)
 			SendPatch(cli, env, change.Path, patch, repo)

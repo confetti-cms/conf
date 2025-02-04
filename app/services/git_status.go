@@ -82,15 +82,27 @@ func IgnoreHidden(changes []GitFileChange) []GitFileChange {
 
 func IgnoreFile(file string) bool {
 	if file == "" || file == "/" {
+		if config.App.VeryVerbose {
+			fmt.Printf("Directory %s is root so we ignore it\n", file)
+		}
 		return true
 	}
 	if strings.Contains(file, "/.") {
+		if config.App.VeryVerbose {
+			fmt.Printf("File or directory %s is hidden so we ignore it\n", file)
+		}
 		return true
 	}
 	if strings.HasPrefix(file, ".") {
+		if config.App.VeryVerbose {
+			fmt.Printf("File or directory %s is hidden so we ignore it\n", file)
+		}
 		return true
 	}
 	if strings.HasSuffix(file, "swp") || strings.HasSuffix(file, "~") {
+		if config.App.VeryVerbose {
+			fmt.Printf("File or directory %s is a swap file so we ignore it\n", file)
+		}
 		return true
 	}
 	return false

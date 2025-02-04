@@ -47,6 +47,12 @@ func (w Scanner) addRecursive(watcher *fsnotify.Watcher, dir string) {
 		log.Fatalf("Failed to read directory %s: %v", dir, err)
 	}
 
+	// Add root directory to the watcher
+	err = watcher.Add(dir)
+	if err != nil {
+		log.Fatalf("Failed to add root directory %s to watcher: %v", dir, err)
+	}
+
 	for _, entry := range entries {
 		walkPath := filepath.Join(dir, entry.Name())
 
@@ -67,7 +73,7 @@ func (w Scanner) addRecursive(watcher *fsnotify.Watcher, dir string) {
 		}
 
 		// Log the directory being watched if verbose mode is enabled
-		if config.App.Verbose {
+		if config.App.VeryVerbose {
 			println("Watch directory: " + walkPath)
 		}
 
@@ -78,7 +84,7 @@ func (w Scanner) addRecursive(watcher *fsnotify.Watcher, dir string) {
 		}
 
 		// Recursive call for subdirectories
-		if config.App.Verbose {
+		if config.App.VeryVerbose {
 			println("Recursive add: " + walkPath)
 		}
 		w.addRecursive(watcher, walkPath)
@@ -156,11 +162,9 @@ func (w Scanner) startListening(cli inter.Cli, watcher *fsnotify.Watcher, env se
 				}
 				continue
 			}
-			if patch == "" {
-				if config.App.Verbose {
-					println("Patch is empty in startListening !!! file: " + file)
-				}
-				continue
+
+			if patch == "" && config.App.Verbose {
+				fmt.Printf("Warning: patch is empty in startListening, file: %s, this is fine if the user undo all changes in a file\n", file)
 			}
 
 			services.SendPatch(cli, env, file, patch, repo)
