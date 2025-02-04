@@ -52,17 +52,17 @@ func Send(cli inter.Cli, url string, body any, method string, env Environment, r
 	}
 	// Use retry mechanism to wait until development containers are up and running
 	// Retries are set up to 4 times, each with a delay of 1 second
-	// If the operation is taboo longer than expected, an informative message is displayed to the user
+	// If the operation is longer than expected, an informative message is displayed to the user
 	if res.StatusCode == http.StatusForbidden {
-		if retry < 4 {
+		if retry < 6 {
 			fmt.Printf("\rSetting up development services. This usually takes 5 seconds    ")
 		} else {
 			fmt.Printf("\rOperation is taking longer than expected.                        ")
 		}
 
-		if retry == 0 {
-			errStartDevContainers := startDevContainers(env, repo)
-			if errStartDevContainers != nil {
+		errStartDevContainers := startDevContainers(env, repo)
+		if errStartDevContainers != nil {
+			if retry > 20 {
 				return "", fmt.Errorf("error starting dev containers: %w", errStartDevContainers)
 			}
 		}
