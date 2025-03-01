@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"src/app/services"
+	"src/app/services/event_bus"
 	"src/config"
 	"strings"
 	"time"
@@ -68,7 +69,9 @@ func (w Scanner) addRecursive(watcher *fsnotify.Watcher, dir string) {
 
 		// Skip Git-ignored directories
 		if services.GitIgnored(walkPath) {
-			println("Ignore by Gitignore directory: " + walkPath)
+			if config.App.VeryVerbose {
+				println("Ignore by Gitignore directory: " + walkPath)
+			}
 			continue
 		}
 
@@ -106,6 +109,7 @@ func (w Scanner) startListening(cli inter.Cli, watcher *fsnotify.Watcher, env se
 			if event.Op == fsnotify.Chmod {
 				continue
 			}
+
 			// Trim local file path
 			file := strings.ReplaceAll(event.Name, config.Path.Root, "")
 			if config.App.VeryVerbose {
@@ -155,11 +159,17 @@ func (w Scanner) startListening(cli inter.Cli, watcher *fsnotify.Watcher, env se
 				continue
 			}
 
+			event_bus.SendMessage(event_bus.Message{Type: "local_file_changed", Message: "Local file changed: " + file})
+
+			time.Sleep(100 * time.Millisecond)
+
 			patch, err := services.GetPatchSinceCommitE(w.RemoteCommit, file, eventIs(event, fsnotify.Create))
 			if err != nil {
 				if err != services.ErrNewFileEmptyPatch {
 					println("Err: get patch when scanner start listening: " + err.Error())
 				}
+				// Send event to the event bus
+				event_bus.SendMessage(event_bus.Message{Type: "error", Message: fmt.Sprintf("Error getting patch for file %s: See your terminal for more information", file)})
 				continue
 			}
 
@@ -189,6 +199,9 @@ func (w Scanner) startListening(cli inter.Cli, watcher *fsnotify.Watcher, env se
 
 			// Set the flag that the resources may have changed
 			services.ResourceMayHaveChanged()
+
+			// Send event to the event bus
+			event_bus.SendMessage(event_bus.Message{Type: "remote_file_processed", Message: "File processed"})
 
 			ln := ""
 			if config.App.Verbose {

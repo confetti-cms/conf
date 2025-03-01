@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"src/app/services"
+	"src/app/services/event_bus"
 	"src/app/services/scanner"
 	"src/config"
 	"strings"
@@ -53,6 +54,9 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 		c.Error(err.Error())
 		return inter.Failure
 	}
+
+	// Open the event bus server
+	go event_bus.Publish()
 
 	// Get commit of the remote repository
 	remoteCommit := services.GetGitRemoteCommit()
@@ -114,6 +118,9 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 		c.Info("Website: http://%s", host)
 		c.Info("Admin: http://%s%s\n", host, "/admin")
 	}
+
+	// Send event to the event bus
+	event_bus.SendMessage(event_bus.Message{Type: "remote_file_processed", Message: "File processed"})
 
 	// Scan and watch next changes
 	scanner.Scanner{
