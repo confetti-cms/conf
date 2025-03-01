@@ -159,9 +159,7 @@ func (w Scanner) startListening(cli inter.Cli, watcher *fsnotify.Watcher, env se
 				continue
 			}
 
-			event_bus.SendMessage(event_bus.Message{Type: "local_file_changed", Message: "Local file changed: " + file})
-
-			time.Sleep(100 * time.Millisecond)
+			event_bus.SendMessage(event_bus.Message{Type: "local_file_changed", Message: "Local file changed"})
 
 			patch, err := services.GetPatchSinceCommitE(w.RemoteCommit, file, eventIs(event, fsnotify.Create))
 			if err != nil {
