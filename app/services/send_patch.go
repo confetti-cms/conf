@@ -35,7 +35,7 @@ func PatchDir(cli inter.Cli, env Environment, remoteCommit string, writer io.Wri
 		os.Exit(1)
 	}
 	// Send patches since latest remote commits
-	bar := getBar(len(changes)*3, "Sync local changes with Confetti", writer)
+	bar := getBar(len(changes)*3, "Sync local changes", writer)
 	wg.Add(len(changes))
 	for _, change := range changes {
 		change := change

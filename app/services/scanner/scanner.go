@@ -99,7 +99,7 @@ func (w Scanner) startListening(cli inter.Cli, watcher *fsnotify.Watcher, env se
 		select {
 		case event, ok := <-watcher.Events:
 			if !ok {
-				log.Println("Not ok")
+				log.Println("watcher.Events channel closed")
 				continue
 			}
 			// AllTime hidden files and directories
@@ -201,11 +201,12 @@ func (w Scanner) startListening(cli inter.Cli, watcher *fsnotify.Watcher, env se
 			// Send event to the event bus
 			event_bus.SendMessage(event_bus.Message{Type: "remote_file_processed", Message: "File processed"})
 
-			ln := ""
+			clearLines()
+			fmt.Printf("Latest sync: %s\n", time.Now().Format("2006-01-02 15:04:05"))
+			fmt.Printf("\033[1;34m%s\033[0m", file)
 			if config.App.Verbose {
-				ln = "\n"
+				fmt.Printf("\n\n")
 			}
-			fmt.Printf("\rLatest sync: %s \033[1;34m%s\033[0m                              %s", time.Now().Format("2006-01-02 15:04:05"), file, ln)
 		case err, ok := <-watcher.Errors:
 			if !ok {
 				continue
@@ -217,4 +218,13 @@ func (w Scanner) startListening(cli inter.Cli, watcher *fsnotify.Watcher, env se
 
 func eventIs(given fsnotify.Event, expect fsnotify.Op) bool {
 	return strings.Contains(given.Op.String(), expect.String()[1:])
+}
+
+func clearLines() {
+	// Clear the file line:
+	// \033[2K clears the current line.
+	// \r returns the cursor to the start of the line.
+	fmt.Printf("\033[2K\r")
+	// Move the cursor up one line and clear that line (the sync line)
+	fmt.Printf("\033[A\033[2K\r")
 }

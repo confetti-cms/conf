@@ -17,11 +17,12 @@ import (
 )
 
 type Watch struct {
-	Directory   string `short:"p" flag:"path" description:"Root directory of the Git repository"`
-	Verbose     bool   `short:"v" flag:"verbose" description:"Show events"`
-	VeryVerbose bool   `short:"vv" flag:"very-verbose" description:"Show all events"`
-	Reset       bool   `short:"r" flag:"reset" description:"All files are parsed again"`
-	Environment string `short:"n" flag:"name" description:"The environment name in the app_config.json5 file, default 'dev'"`
+	Directory       string `short:"p" flag:"path" description:"Root directory of the Git repository"`
+	Verbose         bool   `short:"v" description:"Show events"`
+	VeryVerbose     bool   `short:"vv" description:"Show more events"`
+	VeryVeryVerbose bool   `short:"vvv" description:"Show all events"`
+	Reset           bool   `short:"r" flag:"reset" description:"All files are parsed again"`
+	Environment     string `short:"n" flag:"name" description:"The environment name in the app_config.json5 file, default 'dev'"`
 }
 
 func (t Watch) Name() string {
@@ -37,8 +38,9 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	if !t.Reset {
 		updateResourcesSince = time.Now()
 	}
-	config.App.Verbose = t.Verbose || t.VeryVerbose
-	config.App.VeryVerbose = t.VeryVerbose
+	config.App.Verbose = t.Verbose || t.VeryVerbose || t.VeryVeryVerbose
+	config.App.VeryVerbose = t.VeryVerbose || t.VeryVeryVerbose
+	config.App.VeryVeryVerbose = t.VeryVeryVerbose
 	root, err := t.getDirectoryOrCurrent()
 	if err != nil {
 		c.Error(err.Error())
@@ -118,6 +120,7 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 		c.Info("Website: http://%s", host)
 		c.Info("Admin: http://%s%s\n", host, "/admin")
 	}
+	c.Line("")
 
 	// Send event to the event bus
 	event_bus.SendMessage(event_bus.Message{Type: "remote_file_processed", Message: "File processed"})

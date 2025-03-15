@@ -13,12 +13,13 @@ var App = struct {
 	LineSeparator,
 	Key,
 	Env string
-	OsArgs      []string
-	Port        int
-	Cipher      string
-	Verbose     bool
-	VeryVerbose bool
-	Timezone    *time.Location
+	OsArgs          []string
+	Port            int
+	Cipher          string
+	Verbose         bool
+	VeryVerbose     bool
+	VeryVeryVerbose bool
+	Timezone        *time.Location
 	Locale,
 	FallbackLocale,
 	FakerLocale language.Tag
