@@ -84,7 +84,16 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	// Apply all local changes
 	filesToSync := services.PatchDir(c, env, remoteCommit, c.Writer(), repo)
 	// Remove loading bar
-	fmt.Printf("\r                                                                      ")
+	fmt.Printf("\r                                                                      \n")
+
+	// Run composer install locally if vendor directory is missing
+	err = services.ComposerInstall(c, env)
+	if err != nil {
+		c.Error(err.Error())
+		if !errors.Is(err, services.UserError) {
+			return inter.Failure
+		}
+	}
 
 	// Parse all base components (other components wil extend this components)
 	err = services.ParseBaseComponents(c, env, repo)
