@@ -27,7 +27,7 @@ func ComposerInstall(cli inter.Cli, env Environment) error {
 
 	cli.Info("Composer install")
 
-	cmd := fmt.Sprintf("cd %s && composer install --ignore-platform-reqs --no-interaction", config.Path.Root)
+	cmd := fmt.Sprintf("cd %s && composer install --ignore-platform-reqs --no-interaction --no-progress --no-plugins", config.Path.Root)
 
 	streamErr := StreamCommand(cmd)
 

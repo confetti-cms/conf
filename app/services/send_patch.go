@@ -95,7 +95,7 @@ func SendPatchE(cli inter.Cli, env Environment, path, patch string, repo string)
 		Path:  path,
 		Patch: patch,
 	}
-	if config.App.VeryVerbose {
+	if config.App.VeryVeryVerbose {
 		println("Patch sending:", path)
 	}
 	url := env.GetServiceUrl("confetti-cms/parser")

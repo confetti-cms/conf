@@ -102,7 +102,7 @@ func Send(cli inter.Cli, url string, body any, method string, env Environment, r
 }
 
 func debugRequest(method string, url string, payload string) {
-	if config.App.VeryVerbose {
+	if config.App.VeryVeryVerbose {
 		if len(payload) > 300 {
 			payload = payload[:300] + "(...)"
 		}

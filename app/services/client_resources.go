@@ -115,7 +115,7 @@ func fetchAndSaveResourceFiles(cli inter.Cli, env Environment, repo, file string
 	if err != nil {
 		return err
 	}
-	if config.App.VeryVerbose {
+	if config.App.VeryVeryVerbose {
 		println("Resource fetched and saved: " + target)
 	}
 	return nil

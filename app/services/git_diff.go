@@ -9,7 +9,7 @@ import (
 var ErrNewFileEmptyPatch = fmt.Errorf("Patch is empty. This may be due to the editor. They may have created a new file and edit it directly. So the first patch is empty.")
 
 func GetPatchSinceCommit(commit, path string, isNew bool) (string, error) {
-	if config.App.VeryVerbose {
+	if config.App.VeryVeryVerbose {
 		println("Create patch: " + path)
 	}
 	return GetPatchSinceCommitE(commit, path, isNew)
