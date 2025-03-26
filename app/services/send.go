@@ -29,7 +29,10 @@ func Send(cli inter.Cli, url string, body any, method string, env Environment, r
 	}
 	payload := bytes.NewBuffer(payloadB)
 	// Create request
-	client := &http.Client{Timeout: 30 * time.Second}
+
+	client := &http.Client{
+		Timeout: 30 * time.Second,
+	}
 	debugRequest(method, url, payload.String())
 	req, err := http.NewRequest(method, url, payload)
 	if err != nil {

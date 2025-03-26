@@ -53,7 +53,7 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	c.Info("Confetti watch")
 	env, err := services.GetEnvironmentByInput(c, t.Environment)
 	if err != nil {
-		c.Error(err.Error())
+		c.Error(fmt.Sprintf("Error getting environment: %s", err))
 		return inter.Failure
 	}
 
@@ -126,8 +126,12 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 
 	c.Line("")
 	for _, host := range env.GetExplicitHosts() {
-		c.Info("Website: http://%s", host)
-		c.Info("Admin: http://%s%s\n", host, "/admin")
+		method := "https://"
+		if env.Local {
+			method = "http://"
+		}
+		c.Info("Website: %s%s", method, host)
+		c.Info("Admin: %s%s%s\n", method, host, "/admin")
 	}
 	c.Line("")
 

@@ -2,12 +2,14 @@ package services
 
 import (
 	"fmt"
-	"io/ioutil"
+
 	"path/filepath"
 	"src/config"
 	"strings"
 
 	"github.com/confetti-framework/framework/inter"
+
+	"os"
 
 	"github.com/titanous/json5"
 )
@@ -39,17 +41,17 @@ func (c *ContainerConfig) GetAllURLCombinations(defaultUri string) []string {
 	return combinations
 }
 
-const OrchestratorApiDefault = "http://api.confetti-cms.com/orchestrator"
-const OrchestratorApiLocalhost = "http://api.confetti-cms.localhost/orchestrator"
+const OrchestratorApiLocalhost = "http//api.confetti-cms.localhost/orchestrator"
+const OrchestratorApiDefault = "https://api.confetti-cms.com/orchestrator"
 
 type Environment struct {
-	Name           string            `json:"name"`
-	RunOnLocalhost bool              `json:"run_on_localhost"`
-	Containers     []ContainerConfig `json:"containers"`
+	Name       string            `json:"name"`
+	Local      bool              `json:"local"`
+	Containers []ContainerConfig `json:"containers"`
 }
 
 func (e Environment) GetOrchestratorApi() string {
-	if e.RunOnLocalhost {
+	if e.Local {
 		return OrchestratorApiLocalhost
 	}
 	return OrchestratorApiDefault
@@ -92,16 +94,22 @@ func (e Environment) GetServiceUrl(service string) string {
 	for _, container := range e.Containers {
 		if container.Name == "" {
 			match = container
+			break
 		}
 	}
 	// Find match
 	for _, container := range e.Containers {
 		if container.Name == service {
 			match = container
+			break
 		}
 	}
 	host := match.Hosts[0]
-	return "http://" + host + getUriByAlias(match, service)
+	method := "https://"
+	if e.Local {
+		method = "http://"
+	}
+	return method + host + getUriByAlias(match, service)
 }
 
 func getUriByAlias(cConfig ContainerConfig, service string) string {
@@ -122,14 +130,14 @@ type AppConfig struct {
 
 func GetAppConfig() (AppConfig, error) {
 	aConfig := AppConfig{}
-	content, err := ioutil.ReadFile(filepath.Join(config.Path.Root, configFile))
+	content, err := os.ReadFile(filepath.Join(config.Path.Root, configFile))
 	if err != nil {
 		return aConfig, fmt.Errorf("probably, you are not running this command in a Confetti project. Error: %s", err)
 	}
 
 	err = json5.Unmarshal(content, &aConfig)
 	if err != nil {
-		return aConfig, fmt.Errorf("error unmarshal json5: %s", err)
+		return aConfig, fmt.Errorf("invalid JSON5 content in %s: %s", configFile, err)
 	}
 
 	return aConfig, nil
