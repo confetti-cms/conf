@@ -41,7 +41,7 @@ func (c *ContainerConfig) GetAllURLCombinations(defaultUri string) []string {
 	return combinations
 }
 
-const OrchestratorApiLocalhost = "http//api.confetti-cms.localhost/orchestrator"
+const OrchestratorApiLocalhost = "http://api.confetti-cms.localhost/orchestrator"
 const OrchestratorApiDefault = "https://api.confetti-cms.com/orchestrator"
 
 type Environment struct {
