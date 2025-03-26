@@ -14,7 +14,7 @@ import (
 	"github.com/titanous/json5"
 )
 
-const configFile = "app_config.json5"
+const configFile = "config.json5"
 
 type Hosts []string
 type Paths []string

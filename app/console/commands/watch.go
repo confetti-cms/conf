@@ -22,7 +22,7 @@ type Watch struct {
 	VeryVerbose     bool   `short:"vv" description:"Show more events"`
 	VeryVeryVerbose bool   `short:"vvv" description:"Show all events"`
 	Reset           bool   `short:"r" flag:"reset" description:"All files are parsed again"`
-	Environment     string `short:"n" flag:"name" description:"The environment name in the app_config.json5 file, default 'dev'"`
+	Environment     string `short:"n" flag:"name" description:"The environment name in the config.json5 file, default 'dev'"`
 }
 
 func (t Watch) Name() string {
