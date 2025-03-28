@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"src/config"
+	"strings"
 
 	"github.com/confetti-framework/framework/inter"
 )
@@ -30,6 +31,11 @@ func ComposerInstall(cli inter.Cli, env Environment) error {
 	cmd := fmt.Sprintf("cd %s && composer install --ignore-platform-reqs --no-interaction --no-progress --no-plugins", config.Path.Root)
 
 	streamErr := StreamCommand(cmd)
+
+	// Check if the error message indicates that the command is not recognized.
+	if streamErr != nil && strings.Contains(streamErr.Error(), "is not recognized") {
+		return fmt.Errorf("composer is not installed or not available in PATH. Please install Composer and try again")
+	}
 
 	// Check if the vendor directory is created.
 	// Ignore the error if the vendor directory was successfully created,

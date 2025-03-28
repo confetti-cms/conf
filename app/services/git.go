@@ -73,5 +73,5 @@ func GetGitRemoteCommit() string {
 	if strings.Contains(out, "fatal") {
 		log.Fatal(out)
 	}
-	return strings.Trim(out, "\n")
+	return strings.Trim(out, "\n\"")
 }

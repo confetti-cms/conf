@@ -41,7 +41,15 @@ func debugCommand(command string, outR []byte) {
 }
 
 func StreamCommand(command string) error {
-	cmd := exec.Command("/bin/sh", "-c", command)
+	var cmd *exec.Cmd
+
+	switch runtime.GOOS {
+	case "windows":
+		cmd = exec.Command("cmd", "/C", command)
+	default:
+		cmd = exec.Command("/bin/sh", "-c", command)
+	}
+
 	cmd.Stdout = os.Stdout
 
 	var stderr bytes.Buffer
