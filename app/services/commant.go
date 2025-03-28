@@ -6,11 +6,21 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"runtime"
 	"src/config"
 )
 
 func RunCommand(command string) (string, error) {
-	out, err := exec.Command("/bin/sh", "-c", command).CombinedOutput()
+	var cmd *exec.Cmd
+
+	switch runtime.GOOS {
+	case "windows":
+		cmd = exec.Command("cmd", "/C", command)
+	default:
+		cmd = exec.Command("/bin/sh", "-c", command)
+	}
+
+	out, err := cmd.CombinedOutput()
 
 	debugCommand(command, out)
 
