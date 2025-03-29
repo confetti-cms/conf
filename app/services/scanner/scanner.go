@@ -76,7 +76,7 @@ func (w Scanner) addRecursive(watcher *fsnotify.Watcher, dir string) {
 		}
 
 		// Log the directory being watched if verbose mode is enabled
-		if config.App.VeryVerbose {
+		if config.App.VeryVeryVerbose {
 			println("Watch directory: " + walkPath)
 		}
 
@@ -87,7 +87,7 @@ func (w Scanner) addRecursive(watcher *fsnotify.Watcher, dir string) {
 		}
 
 		// Recursive call for subdirectories
-		if config.App.VeryVerbose {
+		if config.App.VeryVeryVerbose {
 			println("Recursive add: " + walkPath)
 		}
 		w.addRecursive(watcher, walkPath)

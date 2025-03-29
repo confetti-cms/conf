@@ -20,7 +20,7 @@ func ComposerInstall(cli inter.Cli, env Environment) error {
 	}
 	_, err = os.Stat(config.Path.Root + "/vendor")
 	if !os.IsNotExist(err) {
-		if config.App.VeryVerbose {
+		if config.App.VeryVeryVerbose {
 			cli.Info("Vendor directory found in %s, skipping composer install", config.Path.Root)
 		}
 		return nil
@@ -30,7 +30,9 @@ func ComposerInstall(cli inter.Cli, env Environment) error {
 
 	cmd := fmt.Sprintf("cd %s && composer install --ignore-platform-reqs --no-interaction --no-progress --no-plugins", config.Path.Root)
 
-	streamErr := StreamCommand(cmd)
+	// Ignore the result because when composer fails, we always
+	// want to download the vendor directory from the remote server.
+	_ = StreamCommand(cmd)
 
 	// Check if the error message indicates that the command is not recognized.
 	if streamErr != nil && strings.Contains(streamErr.Error(), "is not recognized") {
@@ -42,7 +44,13 @@ func ComposerInstall(cli inter.Cli, env Environment) error {
 	// as PHP may return many warnings to stderr, such as "Cannot load Xdebug - it was already loaded".
 	_, err = os.Stat(config.Path.Root + "/vendor")
 	if os.IsNotExist(err) {
-		return fmt.Errorf("composer install failed: %w\nPlease fix the issue or run `composer install --ignore-platform-reqs` manually in the %s directory", streamErr, config.Path.Root)
+		if config.App.VeryVerbose {
+			cli.Info("Vendor directory not found in %s, downloading vendor directory from remote server", config.Path.Root)
+		}
+		err := DownloadZip(cli, env.GetServiceUrl("confetti-cms/parser")+"/vendor", config.Path.Root+"vendor", env)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
