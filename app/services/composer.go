@@ -45,7 +45,7 @@ func ComposerInstall(cli inter.Cli, env Environment) error {
 	_, err = os.Stat(config.Path.Root + "/vendor")
 	if os.IsNotExist(err) {
 		if config.App.VeryVerbose {
-			cli.Info("Vendor directory not found in %s, downloading vendor directory from remote server", config.Path.Root)
+			println("Vendor directory not found in %s, downloading vendor directory from remote server", config.Path.Root)
 		}
 		err := DownloadZip(cli, env.GetServiceUrl("confetti-cms/parser")+"/vendor", config.Path.Root+"vendor", env)
 		if err != nil {
