@@ -69,7 +69,7 @@ func (w Scanner) addRecursive(watcher *fsnotify.Watcher, dir string) {
 
 		// Skip Git-ignored directories
 		if services.GitIgnored(walkPath) {
-			if config.App.VeryVerbose {
+			if config.App.VeryVeryVerbose {
 				println("Ignore by Gitignore directory: " + walkPath)
 			}
 			continue
