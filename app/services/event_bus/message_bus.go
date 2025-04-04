@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"src/config"
 	"sync"
 
 	"golang.org/x/net/http2"
@@ -81,10 +80,6 @@ func SendMessage(msg Message) {
 
 // Publish starts an HTTP server that streams messages to clients
 func Publish() {
-	if config.App.Verbose {
-		fmt.Println("->> Opening the event bus server on http://localhost:8001/messages")
-	}
-
 	// HTTP server (no TLS)
 	server := &http.Server{
 		Addr:    ":8001",

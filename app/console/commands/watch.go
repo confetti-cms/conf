@@ -57,8 +57,17 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 		return inter.Failure
 	}
 
-	// Open the event bus server
-	go event_bus.Publish()
+	if env.Options.DevTools {
+		// Open the event bus server
+		if config.App.VeryVerbose {
+			fmt.Println("->> Opening the event bus server on http://localhost:8001/messages")
+		}
+		go event_bus.Publish()
+	} else {
+		if config.App.VeryVerbose {
+			c.Line("Config DevTool is set to false. The event bus server is not started.")
+		}
+	}
 
 	// Get commit of the remote repository
 	remoteCommit := services.GetGitRemoteCommit()

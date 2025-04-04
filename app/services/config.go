@@ -44,9 +44,14 @@ func (c *ContainerConfig) GetAllURLCombinations(defaultUri string) []string {
 const OrchestratorApiLocalhost = "http://api.confetti-cms.localhost/orchestrator"
 const OrchestratorApiDefault = "https://api.confetti-cms.com/orchestrator"
 
+type Options struct {
+	DevTools bool `json:"dev_tools"`
+}
+
 type Environment struct {
 	Name       string            `json:"name"`
 	Local      bool              `json:"local"`
+	Options    Options           `json:"options"`
 	Containers []ContainerConfig `json:"containers"`
 }
 
