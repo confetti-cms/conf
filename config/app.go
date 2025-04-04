@@ -37,6 +37,8 @@ var App = struct {
 	*/
 	Name: env.StringOr("APP_NAME", "Confetti"),
 
+	LineSeparator: string(os.PathSeparator),
+
 	/*
 		|--------------------------------------------------------------------------
 		| Encryption Key

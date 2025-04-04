@@ -162,7 +162,7 @@ func (t Watch) getDirectoryOrCurrent() (string, error) {
 		if _, err := os.Stat(filepath.Join(t.Directory, ".git")); os.IsNotExist(err) {
 			return "", errors.New("The specified directory is incorrect. Please ensure that the given directory is correct.")
 		}
-		return strings.TrimRight(t.Directory, "/") + "/", nil
+		return strings.TrimRight(t.Directory, config.App.LineSeparator) + config.App.LineSeparator, nil
 	}
 	path, err := os.Getwd()
 	if err != nil {

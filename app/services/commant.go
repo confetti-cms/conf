@@ -25,7 +25,7 @@ func RunCommand(command string) (string, error) {
 	debugCommand(command, out)
 
 	if err != nil {
-		return string(out), fmt.Errorf("%v.'\n\nOutput:\n\n%s", err, string(out))
+		return string(out), fmt.Errorf("%v.\n\nOutput:\n\n%s", err, string(out))
 	}
 	return string(out), nil
 }

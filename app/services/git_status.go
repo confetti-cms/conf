@@ -14,8 +14,8 @@ import (
 
 type Status string
 
-const rPath = `(?P<path>[-_/0-9A-z.]+)`
-const rToPath = `(?P<to_path>[-_/0-9A-z.]*)`
+const rPath = `(?P<path>[-_\\/0-9A-z.]+)`
+const rToPath = `(?P<to_path>[-_\\/0-9A-z.]*)`
 
 const (
 	GitStatusUnchanged  Status = "."
@@ -81,13 +81,13 @@ func IgnoreHidden(changes []GitFileChange) []GitFileChange {
 }
 
 func IgnoreFile(file string) bool {
-	if file == "" || file == "/" {
+	if file == "" || file == config.App.LineSeparator {
 		if config.App.VeryVeryVerbose {
 			fmt.Printf("Directory %s is root so we ignore it\n", file)
 		}
 		return true
 	}
-	if strings.Contains(file, "/.") {
+	if strings.Contains(file, config.App.LineSeparator+".") {
 		if config.App.VeryVeryVerbose {
 			fmt.Printf("File or directory %s is hidden so we ignore it\n", file)
 		}
