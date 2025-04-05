@@ -9,6 +9,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"src/config"
 	"strings"
 	"time"
@@ -201,8 +202,15 @@ func getRefreshToken(cli inter.Cli) (*token, error) {
 		return nil, err
 	}
 
-	cli.Comment("One step left to sync your local code with the server 🎊\n")
-	cli.Comment("\033[34m               ╭──────────────────────╮\n               │ \033[0mPress enter to login \033[34m│\n               ╰──────────────────────╯\n")
+	// Remove the last line of the screen
+	fmt.Printf("\r                                                                      \n")
+	cli.Comment("Login to sync your local code with the server")
+	// If windows, the user need to give access to open port 8001
+	if runtime.GOOS == "windows" {
+		cli.Comment("And allow access to port 8001 for hot reload to work")
+	}
+
+	cli.Comment("\n\033[34m               ╭──────────────────────╮\n               │ \033[0mPress enter to login \033[34m│\n               ╰──────────────────────╯\n")
 
 	// When project already init, do not wait for the enter key press
 	_, err = os.Stat(filepath.Join(config.Path.Root, "vendor"))
