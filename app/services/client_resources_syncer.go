@@ -16,9 +16,9 @@ func ResourceMayHaveChanged() {
 	resourceMayHaveChanged = true
 }
 
-func UpdateComponents(cli inter.Cli, env Environment, repo string, since time.Time) error {
+func UpdateComponents(cli inter.Cli, env Environment, repo string, since time.Time, reset bool) error {
 	// If reset, we need to remove all local files before we place the new files
-	if since.IsZero() {
+	if reset {
 		if config.App.VeryVerbose {
 			println("Removing all local files due to reset")
 		}

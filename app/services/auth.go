@@ -1,11 +1,14 @@
 package services
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path"
+	"path/filepath"
 	"src/config"
 	"strings"
 	"time"
@@ -35,8 +38,11 @@ func GetAccessToken(cli inter.Cli, env Environment) (string, error) {
 
 func tryTokenFromFile(cli inter.Cli, env Environment) error {
 	// Check if the file exists
-	_, err := os.Stat(".confetti/auth_token.json")
+	_, err := os.Stat(path.Join(config.Path.Root, sharedResourcesDir, "auth_token.json"))
 	if os.IsNotExist(err) {
+		if config.App.Verbose {
+			fmt.Println("Token file does not exist, creating a new one...")
+		}
 		err := createOrUpdateAuthTokenFile(cli)
 		if err != nil {
 			return fmt.Errorf("unable to decode current token: %w", err)
@@ -47,6 +53,11 @@ func tryTokenFromFile(cli inter.Cli, env Environment) error {
 		return fmt.Errorf("error using current token from file: %w", err)
 	}
 	valid, err := currentTokenIsValid(cli, env)
+	if err != nil {
+		return fmt.Errorf("error checking if current token is valid: %w", err)
+	}
+
+	// If the token is not valid, create a new one
 	if !valid {
 		err := createOrUpdateAuthTokenFile(cli)
 		if err != nil {
@@ -99,7 +110,7 @@ func currentTokenIsValid(cli inter.Cli, env Environment) (bool, error) {
 
 func useCurrentTokenFromFile() error {
 	// The file exists, decode it
-	file, err := os.Open(".confetti/auth_token.json")
+	file, err := os.Open(path.Join(config.Path.Root, sharedResourcesDir, "auth_token.json"))
 	if err != nil {
 		return fmt.Errorf("unable to open auth_token.json file: %w", err)
 	}
@@ -117,7 +128,7 @@ func useCurrentTokenFromFile() error {
 
 func createOrUpdateAuthTokenFile(cli inter.Cli) error {
 	// The directory doesn't exist, create it
-	err := os.MkdirAll(".confetti", os.ModePerm)
+	err := os.MkdirAll(path.Join(config.Path.Root, sharedResourcesDir), os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("unable to create directory: %w", err)
 	}
@@ -127,7 +138,7 @@ func createOrUpdateAuthTokenFile(cli inter.Cli) error {
 		return fmt.Errorf("unable to fetch new access token: %w", err)
 	}
 	// Open file
-	file, err := os.OpenFile(".confetti/auth_token.json", os.O_RDWR|os.O_CREATE, os.ModePerm)
+	file, err := os.OpenFile(path.Join(config.Path.Root, sharedResourcesDir, "auth_token.json"), os.O_RDWR|os.O_CREATE, os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("unable to open or create file: %w", err)
 	}
@@ -140,6 +151,9 @@ func createOrUpdateAuthTokenFile(cli inter.Cli) error {
 	_, err = file.Write(token)
 	if err != nil {
 		return fmt.Errorf("unable to write to file: %w", err)
+	}
+	if config.App.Verbose {
+		fmt.Printf("Token file created: %s\n", file.Name())
 	}
 
 	return nil
@@ -190,10 +204,12 @@ func getRefreshToken(cli inter.Cli) (*token, error) {
 	cli.Comment("One step left to sync your local code with the server 🎊\n")
 	cli.Comment("\033[34m               ╭──────────────────────╮\n               │ \033[0mPress enter to login \033[34m│\n               ╰──────────────────────╯\n")
 
-	// Experimental: do not press enter to login
-
-	// buf := bufio.NewReader(os.Stdin)
-	// _, _ = buf.ReadBytes('\n') // Wait for the key press
+	// When project already init, do not wait for the enter key press
+	_, err = os.Stat(filepath.Join(config.Path.Root, "vendor"))
+	if os.IsNotExist(err) {
+		buf := bufio.NewReader(os.Stdin)
+		_, _ = buf.ReadBytes('\n') // Wait for the key press
+	}
 	err = OpenUrl(content.Url)
 	if err != nil {
 		return nil, err

@@ -125,7 +125,7 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	}
 
 	// Generate and download the components
-	err = services.UpdateComponents(c, env, repo, updateResourcesSince)
+	err = services.UpdateComponents(c, env, repo, updateResourcesSince, t.Reset)
 	if err != nil {
 		c.Error(err.Error())
 		if !errors.Is(err, services.UserError) {
