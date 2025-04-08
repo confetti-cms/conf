@@ -3,7 +3,7 @@ name: Tag master
 on:
   push:
     branches:
-      - master
+      - main
 
 # https://github.com/marketplace/actions/github-tag-bump#usage
 jobs:
