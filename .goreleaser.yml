@@ -1,3 +1,7 @@
+version: 2
+
+project_name: conf
+
 builds:
   - binary: conf
     goos:
@@ -8,18 +12,16 @@ builds:
       - arm64
     env:
       - CGO_ENABLED=0
-#    flags:
-#      - -mod=vendor
 
 release:
   prerelease: auto
 
 universal_binaries:
   - replace: true
+    name_template: "{{ .ProjectName }}"
 
 brews:
-  -
-    name: conf
+  - name: conf
     homepage: "https://confetti-cms.com"
     tap:
       owner: confetti-cms
