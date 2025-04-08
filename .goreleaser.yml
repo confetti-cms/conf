@@ -23,7 +23,9 @@ universal_binaries:
 brews:
   - name: conf
     homepage: "https://confetti-cms.com"
-    tap: confetti-cms/homebrew-conf
+    repo:
+      owner: confetti-cms
+      name: homebrew-conf
     commit_author:
       name: Reindert Vetter
       email: reindertvetter+brew@gmail.com
