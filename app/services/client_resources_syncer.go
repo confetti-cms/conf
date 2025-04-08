@@ -55,7 +55,15 @@ func syncClientResources(cli inter.Cli, env Environment, repo string, checkSince
 		newCheckSince = time.Now()
 		err := FetchResources(cli, env, repo, checkSince)
 		if err != nil {
-			cli.Error("Error when fetching client resources: " + err.Error())
+			cli.Error("Error when fetching client resources 1: " + err.Error())
+			cli.Error("Retrying after 3 seconds...")
+			time.Sleep(3 * time.Second)
+			cli.Error("Retrying...")
+			err := FetchResources(cli, env, repo, checkSince)
+			if err != nil {
+				cli.Error("Error when fetching client resources 2: " + err.Error())
+				return
+			}
 		}
 		time.Sleep(1 * time.Second)
 		checkSince = newCheckSince
