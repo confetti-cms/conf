@@ -47,6 +47,17 @@ changelog:
       - "^docs:"
       - "^test:"
 
+brews:
+  - name: conf
+    homepage: "https://confetti-cms.com"
+    repo:
+      owner: confetti-cms
+      name: homebrew-conf
+    commit_author:
+      name: Reindert Vetter
+      email: reindertvetter+brew@gmail.com
+    homepage: "https://confetti-cms.com"
+
 release:
   footer: >-
 
