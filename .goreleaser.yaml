@@ -53,6 +53,7 @@ brews:
     repository:
       owner: confetti-cms
       name: homebrew-conf
+      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
     commit_author:
       name: Reindert Vetter
       email: reindertvetter+brew@gmail.com
