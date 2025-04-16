@@ -56,7 +56,6 @@ brews:
     commit_author:
       name: Reindert Vetter
       email: reindertvetter+brew@gmail.com
-    homepage: "https://confetti-cms.com"
 
 release:
   footer: >-
