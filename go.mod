@@ -1,5 +1,6 @@
 module src
 
+// Please change go-version: 1.18 in /github/workflows/release.yml
 go 1.24
 
 require (
@@ -29,7 +30,7 @@ require (
 	github.com/jedib0t/go-pretty/v6 v6.6.7 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/manifoldco/promptui v0.9.0 // indirect
-	github.com/matryer/is v1.4.0
+	github.com/matryer/is v1.4.1
 	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect
 	github.com/motemen/go-quickfix v0.0.0-20250224075427-39bb724d71b7 // indirect
