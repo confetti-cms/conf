@@ -31,4 +31,4 @@ jobs:
           version: 'v2.8.2'
           args: release
         env:
-          GITHUB_TOKEN: ${{ secrets.PUBLISHER_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
