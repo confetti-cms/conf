@@ -269,7 +269,7 @@ func getTokenByDeviceCode(cli inter.Cli, deviceCode string) (*token, error) {
 
 	// Clean entire screen
 	print("\033[H\033[2J")
-	cli.Info("You have successfully logged in 🥳")
+	cli.Info("Welcome back! You’re logged in 🥳")
 
 	content := &token{}
 
