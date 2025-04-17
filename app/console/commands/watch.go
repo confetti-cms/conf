@@ -47,6 +47,7 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 		return inter.Failure
 	}
 	config.Path.Root = root
+
 	if config.App.Verbose {
 		c.Info("Use directory: %s", root)
 	}
@@ -162,7 +163,7 @@ func (t Watch) getDirectoryOrCurrent() (string, error) {
 		if _, err := os.Stat(filepath.Join(t.Directory, ".git")); os.IsNotExist(err) {
 			return "", errors.New("The specified directory is incorrect. Please ensure that the given directory is correct.")
 		}
-		return strings.TrimRight(t.Directory, config.App.LineSeparator) + config.App.LineSeparator, nil
+		return t.formatRootDir(t.Directory), nil
 	}
 	path, err := os.Getwd()
 	if err != nil {
@@ -171,5 +172,9 @@ func (t Watch) getDirectoryOrCurrent() (string, error) {
 	if _, err := os.Stat(filepath.Join(path, ".git")); os.IsNotExist(err) {
 		return "", errors.New("You are not running this command in the correct location. Please ensure that you are running the command in the correct Git repository.")
 	}
-	return path, nil
+	return t.formatRootDir(path), nil
+}
+
+func (t Watch) formatRootDir(dir string) string {
+	return strings.TrimRight(dir, config.App.LineSeparator) + config.App.LineSeparator
 }

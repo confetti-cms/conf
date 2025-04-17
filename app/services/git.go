@@ -52,8 +52,6 @@ func GitIgnored(dir string) bool {
 		return false
 	}
 	dir = strings.TrimPrefix(dir, root)
-	dir = strings.TrimPrefix(dir, "/")
-	dir = strings.TrimPrefix(dir, "\\")
 	cmd := fmt.Sprintf(`cd %s && git check-ignore %s`, root, dir)
 	out, _ := RunCommand(cmd)
 	// AllTime the error (exit status 1)
