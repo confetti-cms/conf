@@ -21,7 +21,7 @@ type Watch struct {
 	Verbose         bool   `short:"v" description:"Show events"`
 	VeryVerbose     bool   `short:"vv" description:"Show more events"`
 	VeryVeryVerbose bool   `short:"vvv" description:"Show all events"`
-	Reset           bool   `short:"r" flag:"reset" description:"All files are parsed again"`
+	Continue        bool   `short:"c" flag:"continue" description:"All files will not be parsed again. Only the files that have been changed will be parsed."`
 	Environment     string `short:"n" flag:"name" description:"The environment name in the config.json5 file, default 'dev'"`
 }
 
@@ -35,7 +35,7 @@ func (t Watch) Description() string {
 
 func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	updateResourcesSince := time.Time{}
-	if !t.Reset {
+	if t.Continue {
 		updateResourcesSince = time.Now()
 	}
 	config.App.Verbose = t.Verbose || t.VeryVerbose || t.VeryVeryVerbose
@@ -82,7 +82,7 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	fmt.Printf("Sync files...                                                         ")
 	err = services.SendCheckout(c, env, services.CheckoutBody{
 		Commit: remoteCommit,
-		Reset:  t.Reset,
+		Reset:  !t.Continue,
 	}, repo)
 	if err != nil {
 		c.Error(err.Error())
@@ -126,7 +126,7 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	}
 
 	// Generate and download the components
-	err = services.UpdateComponents(c, env, repo, updateResourcesSince, t.Reset)
+	err = services.UpdateComponents(c, env, repo, updateResourcesSince, !t.Continue)
 	if err != nil {
 		c.Error(err.Error())
 		if !errors.Is(err, services.UserError) {
