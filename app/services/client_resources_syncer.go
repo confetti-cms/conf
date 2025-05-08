@@ -51,17 +51,21 @@ func syncClientResources(cli inter.Cli, env Environment, repo string, checkSince
 	if config.App.VeryVerbose {
 		println("Resources may have changed: " + checkSince.Format(time.RFC3339))
 	}
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		newCheckSince = time.Now()
 		err := FetchResources(cli, env, repo, checkSince)
 		if err != nil {
-			cli.Error("Error when fetching client resources 1: " + err.Error())
-			cli.Error("Retrying after 3 seconds...")
+			if config.App.VeryVerbose {
+				println("Error when fetching client resources (Retrying after 3 seconds...): " + err.Error())
+			}
 			time.Sleep(3 * time.Second)
-			cli.Error("Retrying...")
+			if config.App.VeryVerbose {
+				println("Retrying...")
+			}
+
 			err := FetchResources(cli, env, repo, checkSince)
 			if err != nil {
-				cli.Error("Error when fetching client resources 2: " + err.Error())
+				cli.Error("Error when fetching client resources (second time): " + err.Error())
 				return
 			}
 		}
