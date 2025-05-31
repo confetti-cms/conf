@@ -96,7 +96,7 @@ func removeResourceFile(target string) error {
 
 func fetchAndSaveResourceFiles(cli inter.Cli, env Environment, repo, file string) error {
 	baseUrl := env.GetServiceUrl("confetti-cms/shared-resource")
-	content, err := Send(cli, baseUrl+"/resources/content?file="+url.QueryEscape(file), nil, http.MethodGet, env, repo)
+	content, err := Send(cli, baseUrl+"/resources/db?file="+url.QueryEscape(file), nil, http.MethodGet, env, repo)
 	if err != nil {
 		return fmt.Errorf("failed to fetch content of resource: %w", err)
 	}
