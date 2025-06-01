@@ -270,6 +270,7 @@ func getTokenByDeviceCode(cli inter.Cli, deviceCode string) (*token, error) {
 	// Clean entire screen
 	print("\033[H\033[2J")
 	cli.Info("Welcome back! You’re logged in 🥳")
+	cli.Line("Syncing your local code with the server...")
 
 	content := &token{}
 

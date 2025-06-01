@@ -24,6 +24,15 @@ var wg sync.WaitGroup
 
 const maxChanges = 300
 
+func clearLines() {
+	// Clear the file line:
+	// \033[2K clears the current line.
+	// \r returns the cursor to the start of the line.
+	fmt.Printf("\033[2K\r")
+	// Move the cursor up one line and clear that line (the sync line)
+	fmt.Printf("\033[A\033[2K\r")
+}
+
 func PatchDir(cli inter.Cli, env Environment, remoteCommit string, writer io.Writer, repo string) []string {
 	// Get patches since latest remote commits
 	changes := ChangedFilesSinceRemoteCommit(remoteCommit)
@@ -35,6 +44,7 @@ func PatchDir(cli inter.Cli, env Environment, remoteCommit string, writer io.Wri
 		os.Exit(1)
 	}
 	// Send patches since latest remote commits
+	clearLines()
 	bar := getBar(len(changes)*3, "Sync local changes", writer)
 	wg.Add(len(changes))
 	for _, change := range changes {
