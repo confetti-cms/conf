@@ -2,13 +2,10 @@ package commands
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 	"src/app/services"
 	"src/app/services/event_bus"
 	"src/app/services/scanner"
 	"src/config"
-	"strings"
 	"time"
 
 	"github.com/confetti-framework/errors"
@@ -18,11 +15,11 @@ import (
 
 type Watch struct {
 	Directory       string `short:"p" flag:"path" description:"Root directory of the Git repository"`
+	Environment     string `short:"n" flag:"name" description:"The environment name in the config.json5 file, default 'dev'"`
+	Reset           bool   `short:"r" flag:"reset" description:"All files are parsed again"`
 	Verbose         bool   `short:"v" description:"Show events"`
 	VeryVerbose     bool   `short:"vv" description:"Show more events"`
 	VeryVeryVerbose bool   `short:"vvv" description:"Show all events"`
-	Reset           bool   `short:"r" flag:"reset" description:"All files are parsed again"`
-	Environment     string `short:"n" flag:"name" description:"The environment name in the config.json5 file, default 'dev'"`
 }
 
 func (t Watch) Name() string {
@@ -41,7 +38,7 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	config.App.Verbose = t.Verbose || t.VeryVerbose || t.VeryVeryVerbose
 	config.App.VeryVerbose = t.VeryVerbose || t.VeryVeryVerbose
 	config.App.VeryVeryVerbose = t.VeryVeryVerbose
-	root, err := t.getDirectoryOrCurrent()
+	root, err := getDirectoryOrCurrent(t.Directory)
 	if err != nil {
 		c.Error(err.Error())
 		return inter.Failure
@@ -51,7 +48,7 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	if config.App.Verbose {
 		c.Info("Use directory: %s", root)
 	}
-	c.Info("Confetti watch")
+	fmt.Println("\n\033[34mConfetti watch\n\033[0m") // blue
 	env, err := services.GetEnvironmentByInput(c, t.Environment)
 	if err != nil {
 		c.Error(fmt.Sprintf("Error getting environment: %s", err))
@@ -156,25 +153,4 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 
 	// The watch is preventing the code from ever getting here
 	return inter.Success
-}
-
-func (t Watch) getDirectoryOrCurrent() (string, error) {
-	if t.Directory != "" {
-		if _, err := os.Stat(filepath.Join(t.Directory, ".git")); os.IsNotExist(err) {
-			return "", errors.New("The specified directory is incorrect. Please ensure that the given directory is correct.")
-		}
-		return t.formatRootDir(t.Directory), nil
-	}
-	path, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
-	if _, err := os.Stat(filepath.Join(path, ".git")); os.IsNotExist(err) {
-		return "", errors.New("You are not running this command in the correct location. Please ensure that you are running the command in the correct Git repository.")
-	}
-	return t.formatRootDir(path), nil
-}
-
-func (t Watch) formatRootDir(dir string) string {
-	return strings.TrimRight(dir, config.App.LineSeparator) + config.App.LineSeparator
 }

@@ -31,7 +31,7 @@ func ComposerInstall(cli inter.Cli, env Environment) error {
 	cmd := fmt.Sprintf("cd %s && composer install --ignore-platform-reqs --no-interaction --no-progress --no-plugins", config.Path.Root)
 
 	// Ignore the result because composer's warnings go to stderr.
-	_ = StreamCommand(cmd)
+	_, _ = StreamCommand(cmd)
 
 	// Check if the vendor directory is created.
 	// Ignore the error if the vendor directory was successfully created,

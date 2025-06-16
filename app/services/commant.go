@@ -40,8 +40,9 @@ func debugCommand(command string, outR []byte) {
 	}
 }
 
-func StreamCommand(command string) error {
+func StreamCommand(command string) (string, error) {
 	var cmd *exec.Cmd
+	var out bytes.Buffer
 
 	switch runtime.GOOS {
 	case "windows":
@@ -50,25 +51,25 @@ func StreamCommand(command string) error {
 		cmd = exec.Command("/bin/sh", "-c", command)
 	}
 
-	cmd.Stdout = os.Stdout
+	cmd.Stdout = io.MultiWriter(os.Stdout, &out)
 
 	var stderr bytes.Buffer
 	cmd.Stderr = io.MultiWriter(os.Stderr, &stderr)
 
 	if err := cmd.Start(); err != nil {
-		return fmt.Errorf("failed to start command: %v", err)
+		return out.String(), fmt.Errorf("failed to start command: %v", err)
 	}
 
 	if err := cmd.Wait(); err != nil {
 		if stderr.Len() > 0 {
-			return fmt.Errorf("command execution error: %v, stderr: %s", err, stderr.String())
+			return out.String(), fmt.Errorf("command execution error: %v, stderr: %s", err, stderr.String())
 		}
-		return fmt.Errorf("command execution error: %v", err)
+		return out.String(), fmt.Errorf("command execution error: %v", err)
 	}
 
 	if stderr.Len() > 0 {
-		return fmt.Errorf("stderr: %s", stderr.String())
+		return out.String(), fmt.Errorf("stderr: %s", stderr.String())
 	}
 
-	return nil
+	return out.String(), nil
 }
