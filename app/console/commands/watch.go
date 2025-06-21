@@ -14,7 +14,7 @@ import (
 )
 
 type Watch struct {
-	Directory       string `short:"p" flag:"path" description:"Root directory of the Git repository"`
+	Directory       string `short:"dir" flag:"directory" description:"Root directory of the project, defaults to the current directory"`
 	Environment     string `short:"n" flag:"name" description:"The environment name in the config.json5 file, default 'dev'"`
 	Reset           bool   `short:"r" flag:"reset" description:"All files are parsed again"`
 	Verbose         bool   `short:"v" description:"Show events"`

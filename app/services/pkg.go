@@ -10,29 +10,6 @@ import (
 	"github.com/confetti-framework/framework/support"
 )
 
-//     "pkg:pull": [
-//   "sh -c 'echo \"\\n...Checking for modifications...\"' -",
-//   "sh -c 'git diff-index --quiet HEAD -- || (echo \"\\nYour project has modifications, please commit and push or stash them first.\n\" && exit 1)' -",
-//   "sh -c '[ -d \"pkg/$1\" ] && true || ((git --no-pager log -1 --format=\"%H\" -- pkg/$1 | grep -q .) && (echo -e \"\\n...Trying to restore directory...\\n\" && git checkout $(git --no-pager log -1 --format=\"%H\" -- pkg/$1)^ -- pkg/$1 && git commit -am \"Restore package $1\") || true;)' -",
-//   "sh -c '[ -d \"pkg/$1\" ] && true || ((echo \"\\n...Not created in the past, add new package...\\n\" && git subtree add --prefix=\"pkg/$1\" git@github.com:$1.git main);)' -",
-//   "sh -c 'echo \"\\n...Pull latest changes...\\n\"' -",
-//   "sh -c 'git subtree pull --message=\"Pull package $1\" --prefix=\"pkg/$1\" git@github.com:$1.git main' -",
-//   "sh -c 'echo \"\\n...Updating composer.json and add the package to the autoloader...\\n\"' -",
-//   "sh -c 'composer require $1 \"*\" --ignore-platform-reqs' -",
-//   "sh -c 'git commit -am \"Added package to composer $1\" || true' -",
-//   "sh -c 'echo \"\\n...The package $1 is now installed 🎁\\n\"' -",
-//   "sh -c 'echo \"The package $1 is fully integrated into your repository as if you wrote it yourself.\"' -",
-//   "sh -c 'echo \"You can make changes directly in your repository, and the commits will be saved to your own history.\"' -",
-//   "sh -c 'echo \"It’s perfectly fine to maintain a customized version of the package within your main project.\"' -",
-//   "sh -c 'echo \"If you have sufficient permissions, you can push your changes to the central package repository using: `confetti pkg:push $1`.\"' -"
-//
-// Make for this seperate functions
-// 	cmd := fmt.Sprintf("cd %s && composer install --ignore-platform-reqs --no-interaction --no-progress --no-plugins", config.Path.Root)
-// Ignore the result because composer's warnings go to stderr.
-// err = StreamCommand(cmd)
-//
-// This has to be good for windows and linux
-
 func HasModifications() ([]string, error) {
 	cmd := fmt.Sprintf(`cd %s && git diff --name-only && git diff --name-only --cached | sort -u`, config.Path.Root)
 	out, err := RunCommand(cmd)
@@ -98,11 +75,49 @@ func AddNewPackage(pkg string) error {
 
 func PullLatestChanges(pkg string) error {
 	cmd := fmt.Sprintf("cd %s && git subtree pull --message=\"Pull package %s\" --prefix=\"pkg/%s\" git@github.com:%s.git main", config.Path.Root, pkg, pkg, pkg)
+	// We can't use StreamCommand here (for now) because the command gives exit code 1 (if there are no changes).
 	_, err := RunCommand(cmd)
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+func PushPackage(pkg string) error {
+	cmd := fmt.Sprintf("cd %s && git subtree push --prefix=\"pkg/%s\" git@github.com:%s.git main", config.Path.Root, pkg, pkg)
+	_, err := StreamCommand(cmd)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func PkgPackageContainsPhpFiles(pkg string) bool {
+	pkgPath := filepath.Join(config.Path.Root, "pkg", pkg)
+	if config.App.Verbose {
+		fmt.Printf("Checking if package %s contains PHP files in directory: %s\n", pkg, pkgPath)
+	}
+
+	found := false
+	err := filepath.Walk(pkgPath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() && strings.HasSuffix(info.Name(), ".php") {
+			found = true
+			if config.App.VeryVerbose {
+				fmt.Printf("Found PHP file: %s\n", path)
+			}
+			return filepath.SkipDir
+		}
+		return nil
+	})
+
+	if err != nil {
+		support.Dump("Error checking for PHP files in package %s: %v", pkg, err)
+	}
+
+	return found
 }
 
 func UpdateComposer(pkg string) error {
@@ -142,7 +157,7 @@ func PrintPackageNoComposerMessage(pkg string) {
 	fmt.Println("Please check the package directory and ensure it contains a composer.json file.")
 	fmt.Printf("Example composer.json for package %s:\n", pkg)
 	fmt.Printf(
-		"\n\033[34m{\n\n"+
+		"\n\033[34m{\n"+
 			"    \033[36m\"name\"\033[34m: \"\033[32m%s\033[34m\",\n"+
 			"    \033[36m\"autoload\"\033[34m: \033[34m{\n"+
 			"        \033[36m\"psr-4\"\033[34m: \033[34m{\n"+

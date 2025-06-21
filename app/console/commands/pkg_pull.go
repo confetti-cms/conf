@@ -11,9 +11,8 @@ import (
 )
 
 type PkgPull struct {
-	Directory       string `short:"p" flag:"path" description:"Root directory of the Git repository"`
-	Environment     string `short:"n" flag:"name" description:"The environment name in the config.json5 file, default 'dev'"`
-	Package         string `short:"pkg" flag:"package" description:"The package to pull, e.g. 'confetti-cms/office'"`
+	Directory       string `short:"dir" flag:"directory" description:"Root directory of the project, defaults to the current directory"`
+	Package         string `short:"p" flag:"package" description:"The package to pull, e.g. 'confetti-cms/text'"`
 	Verbose         bool   `short:"v" description:"Show events"`
 	VeryVerbose     bool   `short:"vv" description:"Show more events"`
 	VeryVeryVerbose bool   `short:"vvv" description:"Show all events"`
@@ -43,11 +42,11 @@ func (p PkgPull) Handle(c inter.Cli) inter.ExitCode {
 	}
 	fmt.Println("\n\033[34mConfetti pkg:pull\n\033[0m") // blue
 	if p.Package == "" {
-		fmt.Fprintln(os.Stderr, "Error: --package or -pkg flag is required")
+		fmt.Fprintln(os.Stderr, "Error: -pkg or --package flag is required")
 		os.Exit(1)
 	}
 
-	if p.pkgDirExists() && !p.pkgHasFiles() {
+	if pkgDirExists(p.Package) && !pkgHasFiles(p.Package) {
 		// Remove the empty package directory since it is confusing for the system
 		c.Line("Removed empty package directory: %s", p.Package)
 		err = services.RemovePackage(p.Package, "Removed empty package directory sdk/"+p.Package)
@@ -73,10 +72,13 @@ func (p PkgPull) Handle(c inter.Cli) inter.ExitCode {
 		}
 		return inter.Failure
 	}
-	pkgDirIsNew := !p.pkgDirExists()
+	pkgDirIsNew := !pkgDirExists(p.Package)
 
 	// Check if the package directory exists
-	if !p.pkgDirExists() {
+	if config.App.VeryVerbose {
+		c.Line("Checking if package directory exists...")
+	}
+	if !pkgDirExists(p.Package) {
 		c.Line("Package directory does not exist, trying to restore if it was pulled in the past...")
 		restored, err := services.RestoreDirectory(p.Package)
 		if err != nil {
@@ -89,7 +91,10 @@ func (p PkgPull) Handle(c inter.Cli) inter.ExitCode {
 	}
 
 	// If the package directory still does not exist, add it as a new package
-	if !p.pkgDirExists() {
+	if config.App.VeryVerbose {
+		c.Line("Checking if package directory exists after restoration...")
+	}
+	if !pkgDirExists(p.Package) {
 		c.Line("Package directory does not exist, pulling it for the first time...")
 		err := services.AddNewPackage(p.Package)
 		if err != nil {
@@ -105,33 +110,36 @@ func (p PkgPull) Handle(c inter.Cli) inter.ExitCode {
 		return inter.Failure
 	}
 
-	// Check if the package directory has a composer.json file
-	if config.App.Verbose {
-		c.Line("Checking if package directory has a composer.json file...")
-	}
-	pkgDir := filepath.Join(config.Path.Root, "pkg", p.Package)
-	_, err = os.Stat(filepath.Join(pkgDir, "composer.json"))
-	if os.IsNotExist(err) {
-		services.PrintPackageNoComposerMessage(p.Package)
-		return inter.Failure
-	} else if err != nil {
-		c.Error(fmt.Sprintf("Error checking for composer.json in package directory %s: %s", pkgDir, err))
-		return inter.Failure
-	}
+	if services.PkgPackageContainsPhpFiles(p.Package) {
+		c.Line("Package contains PHP files, running composer update...")
+		// Check if the package directory has a composer.json file
+		if config.App.Verbose {
+			c.Line("Checking if package directory has a composer.json file...")
+		}
+		pkgDir := filepath.Join(config.Path.Root, "pkg", p.Package)
+		_, err = os.Stat(filepath.Join(pkgDir, "composer.json"))
+		if os.IsNotExist(err) {
+			services.PrintPackageNoComposerMessage(p.Package)
+			return inter.Failure
+		} else if err != nil {
+			c.Error(fmt.Sprintf("Error checking for composer.json in package directory %s: %s", pkgDir, err))
+			return inter.Failure
+		}
 
-	// Update composer.json and add the package to the autoloader
-	err = services.UpdateComposer(p.Package)
-	if err != nil {
-		c.Error("Failed to update composer.json and add the package to the autoloader: %s", err)
+		// Update composer.json and add the package to the autoloader
+		err = services.UpdateComposer(p.Package)
+		if err != nil {
+			c.Error("Failed to update composer.json and add the package to the autoloader: %s", err)
 
-		return inter.Failure
-	}
+			return inter.Failure
+		}
 
-	// Add the package to the Git index
-	err = services.CommitChanges(p.Package, "Added package to composer "+p.Package)
-	if err != nil {
-		c.Error(fmt.Sprintf("Error committing changes for package %s: %s", p.Package, err))
-		return inter.Failure
+		// Add the package to the Git index
+		err = services.CommitChanges(p.Package, "Added package to composer "+p.Package)
+		if err != nil {
+			c.Error(fmt.Sprintf("Error committing changes for package %s: %s", p.Package, err))
+			return inter.Failure
+		}
 	}
 
 	// Print success message
@@ -145,8 +153,8 @@ func (p PkgPull) Handle(c inter.Cli) inter.ExitCode {
 	return inter.Success
 }
 
-func (p PkgPull) pkgDirExists() bool {
-	dir := filepath.Join(config.Path.Root, "pkg", p.Package)
+func pkgDirExists(pkg string) bool {
+	dir := filepath.Join(config.Path.Root, "pkg", pkg)
 	if config.App.VeryVeryVerbose {
 		fmt.Printf("Checking if package directory exists: %s\n", dir)
 	}
@@ -164,8 +172,8 @@ func (p PkgPull) pkgDirExists() bool {
 }
 
 // pkgHasContent checks if the package directory has any files or subdirectories.
-func (p PkgPull) pkgHasFiles() bool {
-	files, err := os.ReadDir(filepath.Join(config.Path.Root, "pkg", p.Package))
+func pkgHasFiles(pkg string) bool {
+	files, err := os.ReadDir(filepath.Join(config.Path.Root, "pkg", pkg))
 	if err != nil {
 		return false
 	}

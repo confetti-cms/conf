@@ -19,6 +19,7 @@ func NewKernel(app inter.App) console.Kernel {
 		Commands: []inter.Command{
 			commands.Watch{},
 			commands.PkgPull{},
+			commands.PkgPush{},
 		},
 
 		// This list includes custom flag.Getters, you can create custom
