@@ -79,7 +79,13 @@ func (l ContainerQuery) Handle(c inter.Cli) inter.ExitCode {
 		c.Error(fmt.Sprintf("Error getting containers: %s", err))
 		return inter.Failure
 	}
-	organisationNames := services.WhereOrganisation(c, containers, query.UmbrellaOrganization)
+	containers = FilterOrganisation(c, containers)
+
+	// for now dump the containers to debug
+	for _, container := range containers {
+		fmt.Printf("\n\033[34mContainer: %s\n\033[0m", container.Name)
+		fmt.Printf("  Locator: %s\n", container.Locator)
+		
 
 	fmt.Printf("\n\033[34mconf container:query --env=\"%s\"\n\033[0m", env)
 
@@ -89,41 +95,58 @@ func (l ContainerQuery) Handle(c inter.Cli) inter.ExitCode {
 
 const AllEnvironments = "all environments"
 
-func GetEnvironmentName(c inter.Cli, envName string) (string, string, error) {
+func GetEnvironmentName(c inter.Cli, envName string) (string, error) {
 	appConfig, err := services.GetAppConfig()
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
 	names := []string{AllEnvironments}
 	for _, environment := range appConfig.Environments {
 		names = append(names, environment.Name)
 	}
-	envName = c.Choice("You can narrow down your search by selecting an environment:", names...)
-	runningEnv := envName
 	if envName == AllEnvironments {
 		envName = "*"
-		if len(names) < 2 {
-		runningEnv = names[1]
 	}
 
 	return envName, nil
 }
 
-func WhereOrganisation(c inter.Cli, containers []Container, organisation string) []ContainerInformationWithInformation {
-	orgNames := map[string]ContainerInformationWithInformation{}
+func FilterOrganisation(c inter.Cli, containers []services.ContainerInfo) []services.ContainerInfo {
+	// Get all unique organisation names from the containers
+	orgMap := map[string]bool{}
 	for _, container := range containers {
-		if container.UmbrellaOrganization != "" {
-			orgNames[container.UmbrellaOrganization] = container
+		if container.UmbrellaOrganization == "" {
+			panic(fmt.Sprintf("Container %s has no umbrella organization set, this should not happen. Locator: %s", container.Name, container.Locator))
 		}
+		orgMap[container.UmbrellaOrganization] = true
 	}
 	orgNames := []string{}
-	for orgName := range orgNames {
+	for orgName := range orgMap {
 		orgNames = append(orgNames, orgName)
 	}
 
-	
+	// If there is only one organisation, we return all containers
+	if len(orgNames) == 1 {
+		return containers
+	}
 
+	// If there are no organisations, we return an empty slice
+	if len(orgNames) == 0 {
+		return []services.ContainerInfo{}
+	}
 
-	
-	return containers
+	// Multiple organisations, prompt user
+	// If the user has specified an organisation, we already have the containers filtered
+	choices := append([]string{"*"}, orgNames...)
+	selected := c.Choice("Select an organisation:", choices...)
+	if selected == "*" {
+		return containers
+	}
+	filtered := []services.ContainerInfo{}
+	for _, container := range containers {
+		if container.UmbrellaOrganization == selected {
+			filtered = append(filtered, container)
+		}
+	}
+	return filtered
 }

@@ -12,7 +12,7 @@ import (
 type ContainerInformation struct {
 }
 
-type ContainerInformationWithInformation struct {
+type ContainerInfo struct {
 	ID                   string                 `json:"id"`
 	Locator              string                 `json:"locator"`
 	SourceOrganization   string                 `json:"source_organization"`
@@ -38,7 +38,7 @@ type QueryContainerOptions struct {
 	UmbrellaRepository   string `json:"umbrella_repository"`
 }
 
-func GetContainers(cli inter.Cli, runningEnv Environment, options QueryContainerOptions) ([]ContainerInformationWithInformation, error) {
+func GetContainers(cli inter.Cli, runningEnv Environment, options QueryContainerOptions) ([]ContainerInfo, error) {
 	baseUrl := GetOrchestratorContainerListUrl()
 	u, err := url.Parse(baseUrl)
 	if err != nil {
@@ -62,7 +62,7 @@ func GetContainers(cli inter.Cli, runningEnv Environment, options QueryContainer
 	}
 
 	type responseData struct {
-		Data []ContainerInformationWithInformation `json:"data"`
+		Data []ContainerInfo `json:"data"`
 	}
 	var result responseData
 	err = json.Unmarshal([]byte(resp), &result)
