@@ -19,6 +19,7 @@ var App = struct {
 	Verbose         bool
 	VeryVerbose     bool
 	VeryVeryVerbose bool
+	Local           bool
 	Timezone        *time.Location
 	Locale,
 	FallbackLocale,
