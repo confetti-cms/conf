@@ -104,6 +104,10 @@ func GetEnvironmentName(c inter.Cli, envName string) (string, error) {
 	for _, environment := range appConfig.Environments {
 		names = append(names, environment.Name)
 	}
+	if len(names) == 1 {
+		return "", fmt.Errorf("no environments found, please define an environment in your config.json5 file")
+	}
+	envName = c.Choice("You can narrow down your search by selecting an environment:", names...)
 	if envName == AllEnvironments {
 		envName = "*"
 	}
