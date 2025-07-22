@@ -60,7 +60,7 @@ func (l ContainerQuery) Handle(c inter.Cli) inter.ExitCode {
 		// If we can't get the environment by the query env (e.g. "all environments"),
 		// We ask the user to select an running environment
 		fmt.Printf("We couldn't find the environment by the query env.\nPlease select an environment so we can check if you are authorized.\n")
-		runningEnv, err := services.GetEnvironmentByInput(c, "")
+		runningEnv, err = services.GetEnvironmentByInput(c, "")
 		if err != nil {
 			c.Error(fmt.Sprintf("Error getting environment: %s", err))
 			return inter.Failure
@@ -85,7 +85,7 @@ func (l ContainerQuery) Handle(c inter.Cli) inter.ExitCode {
 	for _, container := range containers {
 		fmt.Printf("\n\033[34mContainer: %s\n\033[0m", container.Name)
 		fmt.Printf("  Locator: %s\n", container.Locator)
-		
+	}
 
 	fmt.Printf("\n\033[34mconf container:query --env=\"%s\"\n\033[0m", env)
 
