@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"src/app/services"
 	"src/config"
+	"time"
 
 	"github.com/confetti-framework/framework/inter"
 	"github.com/jedib0t/go-pretty/v6/table"
@@ -60,7 +61,7 @@ func (l ContainerQuery) Handle(c inter.Cli) inter.ExitCode {
 	if err != nil {
 		// If we can't get the environment by the query env (e.g. "all environments"),
 		// We ask the user to select an running environment
-		fmt.Printf("We couldn't find the environment by the query env.\nPlease select an environment so we can check if you are authorized.\n")
+		fmt.Printf("We couldn't find the environment by the query.\nPlease select an environment so we can check if you are authorized.\n")
 		runningEnv, err = services.GetEnvironmentByInput(c, "")
 		if err != nil {
 			c.Error(fmt.Sprintf("Error getting environment: %s", err))
@@ -83,11 +84,123 @@ func (l ContainerQuery) Handle(c inter.Cli) inter.ExitCode {
 	containers, chosenOrg := FilterOrganisation(c, containers)
 	containers, chosenRepo := FilterRepository(c, containers)
 
+	fmt.Printf("\n\033[0mconf container:query --e=\"%s\" --o=\"%s\" --r=\"%s\"\n\033[0m", env, chosenOrg, chosenRepo)
 	renderContainerTable(c, containers)
-	fmt.Printf("\n\033[34mconf container:query --e=\"%s\" --o=\"%s\" --r=\"%s\"\n\033[0m", env, chosenOrg, chosenRepo)
+
+	printEasterEgg()
 
 	// The watch is preventing the code from ever getting here
 	return inter.Success
+}
+
+const eggPosition = 36
+
+func printEasterEgg() {
+	fmt.Printf("\n\n\n\n\n\n")
+	printEmoji(0, " ")
+	fmt.Printf("\033[%dD", eggPosition) // Cursor back to the left
+	time.Sleep(4000 * time.Millisecond)
+	printEmoji(0, "✋")
+	printEmoji(0, "👋")
+	printEmoji(0, "✋")
+	printEmoji(0, "👋")
+	printEmoji(0, "✋")
+	printEmoji(0, "👋")
+	printEmoji(0, "✋")
+	printEmoji(0, "👋")
+	printEmoji(0, "✋")
+	printEmoji(0, "👋")
+	printEmoji(0, "✋")
+	printEmoji(0, "👋")
+	printEmoji(0, "👉")
+	printEmoji(1, "👉")
+	printEmoji(2, "👉")
+	printEmoji(3, "👉")
+	printEmoji(4, "👉")
+	printEmoji(5, "👉")
+	printEmoji(6, "👉")
+	printEmoji(7, "👉")
+	printEmoji(8, "👉")
+	printEmoji(9, "👉")
+	printEmoji(10, "👉")
+	printEmoji(12, "👉")
+	printEmoji(13, "👉")
+	printEmoji(14, "👉")
+	printEmoji(15, "👉")
+	printEmoji(16, "")
+
+	typeMachine(18, "You found a hidden egg today,\n")
+	typeMachine(17, "A glimpse of what's on the way.\n\n")
+	typeMachine(17, "Logs and containers, all in one,\n")
+	typeMachine(17, "Across projects, work gets done.\n\n")
+	typeMachine(18, "Confetti runs like it's local,\n")
+	typeMachine(19, "Fast and clean, fully vocal.\n\n")
+
+	time.Sleep(500 * time.Millisecond)
+	fmt.Print("\n")
+	time.Sleep(200 * time.Millisecond)
+	fmt.Print("\n")
+	time.Sleep(200 * time.Millisecond)
+	fmt.Print("\n")
+	time.Sleep(400 * time.Millisecond)
+	fmt.Print("\n")
+	time.Sleep(1000 * time.Millisecond)
+	fmt.Print("\n")
+	time.Sleep(2000 * time.Millisecond)
+	fmt.Print("\n")
+}
+
+func typeMachine(prefix int, line string) {
+	printCharacter(prefix, " ", 0)
+	for _, char := range line {
+		fmt.Printf("%c", char)
+		time.Sleep(100 * time.Millisecond)
+	}
+	fmt.Print("\n")
+}
+
+func printEmoji(pos int, e string) {
+	fmt.Printf("                                                  \r") // Remove previous emoji
+	// if pos > 0 {
+	// fmt.Printf("\033[%dC", pos) // Cursor to the right
+	// }
+	printCharacter(15+pos, " ", 0) // Fill the rest with spaces
+	fmt.Printf("%s", e)            // Print emoji
+
+	// Print 🥚 at the right position (always with 15 white spaces from the very left - position of the hand
+	printCharacter(15-pos, " ", 0) // Fill the rest with spaces
+	if pos <= 15 {
+		fmt.Print("🥚")
+		fmt.Printf("\033[%dD", eggPosition) // Cursor back to the left
+	} else {
+		fmt.Print("🐣\n")
+		time.Sleep(2000 * time.Millisecond)
+		fmt.Print("\n")
+		time.Sleep(1000 * time.Millisecond)
+		fmt.Print("\n")
+		time.Sleep(400 * time.Millisecond)
+		fmt.Print("\n")
+		time.Sleep(200 * time.Millisecond)
+		fmt.Print("\n")
+		time.Sleep(200 * time.Millisecond)
+		fmt.Print("\n")
+		time.Sleep(100 * time.Millisecond)
+		fmt.Print("\n")
+	}
+
+	if pos == 0 {
+		time.Sleep(300 * time.Millisecond)
+	} else {
+		time.Sleep(120 * time.Millisecond)
+	}
+	fmt.Printf("\033[%dD", eggPosition) // Cursor back to the left
+}
+
+func printCharacter(times int, char string, duration time.Duration) {
+	for i := 0; i < times; i++ {
+		fmt.Print(char)
+		time.Sleep(duration)
+	}
 }
 
 const AllEnvironments = "all environments"
@@ -212,7 +325,7 @@ func renderContainerTable(c inter.Cli, containers []services.ContainerInformatio
 		}
 		ta.AppendRow(table.Row{
 			fmt.Sprintf("\033[34m%s\033[0m", container.Name),   // blue
-			fmt.Sprintf("\033[35m%s\033[0m", container.Target), // magenta
+			fmt.Sprintf("\033[34m%s\033[0m", container.Target), // magenta
 			fmt.Sprintf("%s%s\033[0m", statusColor, container.Status),
 		})
 	}
