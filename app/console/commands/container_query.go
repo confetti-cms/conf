@@ -83,14 +83,7 @@ func (l ContainerQuery) Handle(c inter.Cli) inter.ExitCode {
 	containers, chosenOrg := FilterOrganisation(c, containers)
 	containers, chosenRepo := FilterRepository(c, containers)
 
-	// for now dump the containers to debug
-	ta := c.Table()
-	ta.AppendHeader(table.Row{"Name", "target", "status"})
-	for _, container := range containers {
-		ta.AppendRow(table.Row{container.Name, container.Target, container.Status})
-	}
-	ta.Render()
-
+	renderContainerTable(c, containers)
 	fmt.Printf("\n\033[34mconf container:query --e=\"%s\" --o=\"%s\" --r=\"%s\"\n\033[0m", env, chosenOrg, chosenRepo)
 
 	// The watch is preventing the code from ever getting here
@@ -200,4 +193,28 @@ func FilterRepository(c inter.Cli, containers []services.ContainerInformation) (
 		}
 	}
 	return filtered, selected
+}
+
+func renderContainerTable(c inter.Cli, containers []services.ContainerInformation) {
+	ta := c.Table()
+	ta.AppendHeader(table.Row{"Name", "target", "status"})
+	for _, container := range containers {
+		statusColor := "\033[32m" // green
+		switch container.Status {
+		case "running":
+			statusColor = "\033[32m" // green
+		case "stopped", "exited":
+			statusColor = "\033[31m" // red
+		case "paused":
+			statusColor = "\033[33m" // yellow
+		default:
+			statusColor = "\033[36m" // cyan
+		}
+		ta.AppendRow(table.Row{
+			fmt.Sprintf("\033[34m%s\033[0m", container.Name),   // blue
+			fmt.Sprintf("\033[35m%s\033[0m", container.Target), // magenta
+			fmt.Sprintf("%s%s\033[0m", statusColor, container.Status),
+		})
+	}
+	ta.Render()
 }
