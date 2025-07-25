@@ -4,15 +4,11 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/url"
-	"src/config"
 
 	"github.com/confetti-framework/framework/inter"
 )
 
 type ContainerInformation struct {
-}
-
-type ContainerInfo struct {
 	ID                   string                 `json:"id"`
 	Locator              string                 `json:"locator"`
 	SourceOrganization   string                 `json:"source_organization"`
@@ -22,7 +18,7 @@ type ContainerInfo struct {
 	Name                 string                 `json:"name"`
 	Target               string                 `json:"target"`
 	Status               string                 `json:"status"`
-	Ports                []string               `json:"ports"`
+	Ports                []uint                 `json:"ports"`
 	NetworkName          string                 `json:"network_name"`
 	Environment          EnvironmentInformation `json:"environment"`
 }
@@ -38,9 +34,8 @@ type QueryContainerOptions struct {
 	UmbrellaRepository   string `json:"umbrella_repository"`
 }
 
-func GetContainers(cli inter.Cli, runningEnv Environment, options QueryContainerOptions) ([]ContainerInfo, error) {
-	baseUrl := GetOrchestratorContainerListUrl()
-	u, err := url.Parse(baseUrl)
+func GetContainers(cli inter.Cli, runningEnv Environment, options QueryContainerOptions) ([]ContainerInformation, error) {
+	u, err := url.Parse(GetOrchestratorContainerListUrl(runningEnv.Local))
 	if err != nil {
 		return nil, err
 	}
@@ -56,24 +51,25 @@ func GetContainers(cli inter.Cli, runningEnv Environment, options QueryContainer
 	}
 	u.RawQuery = q.Encode()
 
-	resp, err := Send(cli, u.String(), nil, http.MethodPut, runningEnv, "")
+	resp, err := Send(cli, u.String(), nil, http.MethodGet, runningEnv, "")
 	if err != nil {
 		return nil, err
 	}
 
 	type responseData struct {
-		Data []ContainerInfo `json:"data"`
+		Data []ContainerInformation `json:"data"`
 	}
 	var result responseData
 	err = json.Unmarshal([]byte(resp), &result)
 	if err != nil {
 		return nil, err
 	}
+
 	return result.Data, nil
 }
 
-func GetOrchestratorContainerListUrl() string {
-	if config.App.Local {
+func GetOrchestratorContainerListUrl(isLocal bool) string {
+	if isLocal {
 		return OrchestratorApiLocalhost + "/container_list"
 	}
 	return OrchestratorApiDefault + "/container_list"

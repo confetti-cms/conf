@@ -12,6 +12,7 @@ import (
 	"runtime"
 	"src/config"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/confetti-framework/framework/inter"
@@ -26,6 +27,7 @@ type token struct {
 }
 
 var currentToken *token
+var createOrUpdateAuthTokenFileMutex sync.Mutex
 
 func GetAccessToken(cli inter.Cli, env Environment) (string, error) {
 	if currentToken == nil {
@@ -128,6 +130,8 @@ func useCurrentTokenFromFile() error {
 }
 
 func createOrUpdateAuthTokenFile(cli inter.Cli) error {
+	createOrUpdateAuthTokenFileMutex.Lock()
+	defer createOrUpdateAuthTokenFileMutex.Unlock()
 	// The directory doesn't exist, create it
 	err := os.MkdirAll(path.Join(config.Path.Root, sharedResourcesDir), os.ModePerm)
 	if err != nil {

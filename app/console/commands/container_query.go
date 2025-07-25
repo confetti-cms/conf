@@ -6,6 +6,7 @@ import (
 	"src/config"
 
 	"github.com/confetti-framework/framework/inter"
+	"github.com/jedib0t/go-pretty/v6/table"
 )
 
 type ContainerQuery struct {
@@ -79,15 +80,18 @@ func (l ContainerQuery) Handle(c inter.Cli) inter.ExitCode {
 		c.Error(fmt.Sprintf("Error getting containers: %s", err))
 		return inter.Failure
 	}
-	containers = FilterOrganisation(c, containers)
+	containers, chosenOrg := FilterOrganisation(c, containers)
+	containers, chosenRepo := FilterRepository(c, containers)
 
 	// for now dump the containers to debug
+	ta := c.Table()
+	ta.AppendHeader(table.Row{"Name", "target", "status"})
 	for _, container := range containers {
-		fmt.Printf("\n\033[34mContainer: %s\n\033[0m", container.Name)
-		fmt.Printf("  Locator: %s\n", container.Locator)
+		ta.AppendRow(table.Row{container.Name, container.Target, container.Status})
 	}
+	ta.Render()
 
-	fmt.Printf("\n\033[34mconf container:query --env=\"%s\"\n\033[0m", env)
+	fmt.Printf("\n\033[34mconf container:query --e=\"%s\" --o=\"%s\" --r=\"%s\"\n\033[0m", env, chosenOrg, chosenRepo)
 
 	// The watch is preventing the code from ever getting here
 	return inter.Success
@@ -115,7 +119,9 @@ func GetEnvironmentName(c inter.Cli, envName string) (string, error) {
 	return envName, nil
 }
 
-func FilterOrganisation(c inter.Cli, containers []services.ContainerInfo) []services.ContainerInfo {
+const AllOrganisations = "all organisations"
+
+func FilterOrganisation(c inter.Cli, containers []services.ContainerInformation) ([]services.ContainerInformation, string) {
 	// Get all unique organisation names from the containers
 	orgMap := map[string]bool{}
 	for _, container := range containers {
@@ -131,26 +137,67 @@ func FilterOrganisation(c inter.Cli, containers []services.ContainerInfo) []serv
 
 	// If there is only one organisation, we return all containers
 	if len(orgNames) == 1 {
-		return containers
+		return containers, orgNames[0]
 	}
 
 	// If there are no organisations, we return an empty slice
 	if len(orgNames) == 0 {
-		return []services.ContainerInfo{}
+		return []services.ContainerInformation{}, "*"
 	}
 
 	// Multiple organisations, prompt user
 	// If the user has specified an organisation, we already have the containers filtered
-	choices := append([]string{"*"}, orgNames...)
+	choices := append([]string{AllOrganisations}, orgNames...)
 	selected := c.Choice("Select an organisation:", choices...)
-	if selected == "*" {
-		return containers
+	if selected == AllOrganisations {
+		return containers, "*"
 	}
-	filtered := []services.ContainerInfo{}
+	filtered := []services.ContainerInformation{}
 	for _, container := range containers {
 		if container.UmbrellaOrganization == selected {
 			filtered = append(filtered, container)
 		}
 	}
-	return filtered
+	return filtered, selected
+}
+
+const AllRepositories = "all repositories"
+
+func FilterRepository(c inter.Cli, containers []services.ContainerInformation) ([]services.ContainerInformation, string) {
+	// Get all unique repository names from the containers
+	repoMap := map[string]bool{}
+	for _, container := range containers {
+		if container.UmbrellaRepository == "" {
+			panic(fmt.Sprintf("Container %s has no umbrella repository set, this should not happen. Locator: %s", container.Name, container.Locator))
+		}
+		repoMap[container.UmbrellaRepository] = true
+	}
+	repoNames := []string{}
+	for repoName := range repoMap {
+		repoNames = append(repoNames, repoName)
+	}
+
+	// If there is only one repository, we return all containers
+	if len(repoNames) == 1 {
+		return containers, repoNames[0]
+	}
+
+	// If there are no repositories, we return an empty slice
+	if len(repoNames) == 0 {
+		return []services.ContainerInformation{}, "*"
+	}
+
+	// Multiple repositories, prompt user
+	choices := append([]string{AllRepositories}, repoNames...)
+	selected := c.Choice("Select a repository:", choices...)
+	if selected == AllRepositories {
+		return containers, "*"
+	}
+	filtered := []services.ContainerInformation{}
+	for _, container := range containers {
+		if container.UmbrellaRepository == selected {
+			filtered = append(filtered, container)
+		}
+	}
+	return filtered, selected
 }
