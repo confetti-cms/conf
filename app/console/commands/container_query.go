@@ -137,9 +137,9 @@ func printEasterEgg() {
 	printEmoji(14, "👉")
 	printEmoji(13, "👉")
 	printEmoji(13, "👉")
-	printEmoji(13, "🤜")
-	printEmoji(13, "🤜")
-	printEmoji(13, "🤜")
+	printEmoji(13, "👉")
+	printEmoji(13, "👉")
+	printEmoji(13, "👉")
 	printEmoji(16, "")
 
 	typeMachine(18, "You found a hidden egg today,\n")
