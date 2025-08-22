@@ -323,7 +323,7 @@ func FilterRepository(c inter.Cli, containers []services.ContainerInformation) (
 
 func renderContainerTable(c inter.Cli, containers []services.ContainerInformation) {
 	ta := c.Table()
-	ta.AppendHeader(table.Row{"Name", "target", "status"})
+	ta.AppendHeader(table.Row{"Environment", "Name", "target", "status"})
 	for _, container := range containers {
 		statusColor := "\033[32m" // green
 		switch container.Status {
@@ -337,8 +337,9 @@ func renderContainerTable(c inter.Cli, containers []services.ContainerInformatio
 			statusColor = "\033[36m" // cyan
 		}
 		ta.AppendRow(table.Row{
-			fmt.Sprintf("\033[34m%s\033[0m", container.Name),   // blue
-			fmt.Sprintf("\033[34m%s\033[0m", container.Target), // magenta
+			fmt.Sprintf("\033[34m%s\033[0m", container.Environment.Name), // blue
+			fmt.Sprintf("\033[34m%s\033[0m", container.Name),             // blue
+			fmt.Sprintf("\033[34m%s\033[0m", container.Target),           // magenta
 			fmt.Sprintf("%s%s\033[0m", statusColor, container.Status),
 		})
 	}

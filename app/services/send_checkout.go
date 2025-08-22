@@ -1,17 +1,19 @@
 package services
 
 import (
-	"github.com/confetti-framework/framework/inter"
 	"net/http"
+
+	"github.com/confetti-framework/framework/inter"
 )
 
 type CheckoutBody struct {
 	Commit string `json:"commit"`
 	Reset  bool   `json:"reset"`
+	Parse  bool   `json:"parse"`
 }
 
 func SendCheckout(cli inter.Cli, env Environment, requestBody CheckoutBody, repo string) error {
 	url := env.GetServiceUrl("confetti-cms/parser")
-	_, err := Send(cli, url + "/checkout", requestBody, http.MethodPut, env, repo)
-    return err
+	_, err := Send(cli, url+"/checkout", requestBody, http.MethodPut, env, repo)
+	return err
 }

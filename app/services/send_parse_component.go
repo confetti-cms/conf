@@ -15,3 +15,9 @@ func ParseComponent(cli inter.Cli, env Environment, body ParseComponentBody, rep
 	_, err := Send(cli, url+"/parse_component", body, http.MethodPost, env, repo)
 	return err
 }
+
+func ParseAllComponents(cli inter.Cli, env Environment, repo string) error {
+	url := env.GetServiceUrl("confetti-cms/parser")
+	_, err := Send(cli, url+"/parse_all_components", []string{}, http.MethodPost, env, repo)
+	return err
+}

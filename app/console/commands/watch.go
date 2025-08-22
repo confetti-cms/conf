@@ -80,6 +80,7 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	err = services.SendCheckout(c, env, services.CheckoutBody{
 		Commit: remoteCommit,
 		Reset:  t.Reset,
+		Parse:  false,
 	}, repo)
 	if err != nil {
 		c.Error(err.Error())
@@ -89,11 +90,17 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	}
 
 	// Apply all local changes
+	if config.App.VeryVerbose {
+		fmt.Println("->> Applying local changes")
+	}
 	filesToSync := services.PatchDir(c, env, remoteCommit, c.Writer(), repo)
 	// Remove loading bar
 	fmt.Printf("\r                                                                      \n")
 
 	// Run composer install locally if vendor directory is missing
+	if config.App.VeryVerbose {
+		fmt.Println("->> Checking composer dependencies")
+	}
 	err = services.ComposerInstall(c, env)
 	if err != nil {
 		c.Error(err.Error())
@@ -103,6 +110,9 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	}
 
 	// Parse all base components (other components wil extend this components)
+	if config.App.VeryVerbose {
+		fmt.Println("->> Parsing base components")
+	}
 	err = services.ParseBaseComponents(c, env, repo)
 	if err != nil {
 		c.Error(err.Error())
@@ -112,12 +122,27 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	}
 
 	// Parse components
-	for _, file := range filesToSync {
-		err = services.ParseComponent(c, env, services.ParseComponentBody{File: file}, repo)
+	if config.App.VeryVerbose {
+		fmt.Println("->> Parsing components")
+	}
+	if t.Reset {
+		err = services.ParseAllComponents(c, env, repo)
 		if err != nil {
 			c.Error(err.Error())
 			if !errors.Is(err, services.UserError) {
 				return inter.Failure
+			}
+		}
+	} else {
+		for _, file := range filesToSync {
+			err = services.ParseComponent(c, env, services.ParseComponentBody{
+				File: file,
+			}, repo)
+			if err != nil {
+				c.Error(err.Error())
+				if !errors.Is(err, services.UserError) {
+					return inter.Failure
+				}
 			}
 		}
 	}

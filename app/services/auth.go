@@ -124,7 +124,7 @@ func useCurrentTokenFromFile() error {
 	decoder := json.NewDecoder(file)
 	err = decoder.Decode(currentToken)
 	if err != nil {
-		return fmt.Errorf("unable to decode current token: %w", err)
+		return fmt.Errorf("unable to decode current token from file: %w", err)
 	}
 	return nil
 }
