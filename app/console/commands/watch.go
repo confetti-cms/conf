@@ -95,7 +95,8 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	}
 	filesToSync := services.PatchDir(c, env, remoteCommit, c.Writer(), repo)
 	// Remove loading bar
-	fmt.Printf("\r                                                                      \n")
+	services.ClearLines()
+	services.ClearLines()
 
 	// Run composer install locally if vendor directory is missing
 	if config.App.VeryVerbose {

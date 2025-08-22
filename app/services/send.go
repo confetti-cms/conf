@@ -19,7 +19,7 @@ var UserError = errors.New("something went wrong, you can probably adjust it you
 
 var retry = 0
 
-func Send(cli inter.Cli, requestUrl string, body any, method string, env Environment, repo string) (string, error) {
+func Send(cli inter.Cli, requestUrl string, body any, method string, env Environment, repo string, timeout time.Duration) (string, error) {
 	token, err := GetAccessToken(cli, env)
 	if err != nil {
 		return "", err
@@ -32,7 +32,7 @@ func Send(cli inter.Cli, requestUrl string, body any, method string, env Environ
 	// Create request
 
 	client := &http.Client{
-		Timeout: 30 * time.Second,
+		Timeout: timeout,
 	}
 	debugRequest(method, requestUrl, payload.String())
 	req, err := http.NewRequest(method, requestUrl, payload)
@@ -72,7 +72,7 @@ func Send(cli inter.Cli, requestUrl string, body any, method string, env Environ
 		}
 		time.Sleep(1 * time.Second)
 		retry++
-		return Send(cli, requestUrl, body, method, env, repo)
+		return Send(cli, requestUrl, body, method, env, repo, 30*time.Second)
 	}
 	if res.StatusCode == http.StatusBadGateway {
 		// Override previous message with spaces
@@ -82,7 +82,7 @@ func Send(cli inter.Cli, requestUrl string, body any, method string, env Environ
 		}
 		time.Sleep(1 * time.Second)
 		retry++
-		return Send(cli, requestUrl, body, method, env, repo)
+		return Send(cli, requestUrl, body, method, env, repo, 30*time.Second)
 	}
 	retry = 0
 	if res.StatusCode > 299 {

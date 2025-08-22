@@ -153,7 +153,8 @@ func (w Scanner) startListening(cli inter.Cli, watcher *fsnotify.Watcher, env se
 				}
 				services.PatchDir(cli, env, w.RemoteCommit, w.Writer, repo)
 				// Remove loading bar
-				fmt.Printf("\r                                                                      ")
+				clearLines()
+				clearLines()
 
 				w.addRecursive(watcher, event.Name)
 				continue
@@ -175,7 +176,7 @@ func (w Scanner) startListening(cli inter.Cli, watcher *fsnotify.Watcher, env se
 				fmt.Printf("Warning: patch is empty in startListening, file: %s, this is fine if the user undo all changes in a file\n", file)
 			}
 
-			services.SendPatch(cli, env, file, patch, repo)
+			services.SendPatch(cli, env, file, patch, repo, 30*time.Second)
 			if services.IsBaseComponent(file) {
 				if config.App.VeryVerbose {
 					println("Base component is changed")

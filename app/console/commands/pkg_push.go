@@ -42,6 +42,7 @@ func (p PkgPush) Handle(c inter.Cli) inter.ExitCode {
 	fmt.Println("\n\033[34mConfetti pkg:push\n\033[0m") // blue
 	if p.Package == "" {
 		fmt.Fprintln(os.Stderr, "Error: -pkg or --package flag is required")
+		services.PlayErrorSound()
 		os.Exit(1)
 	}
 

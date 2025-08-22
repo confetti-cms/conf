@@ -69,7 +69,7 @@ func FetchResources(cli inter.Cli, env Environment, repo string, since time.Time
 
 func getResourceFileNames(cli inter.Cli, env Environment, repo string, since time.Time) ([]string, error) {
 	baseUrl := env.GetServiceUrl("confetti-cms/shared-resource")
-	content, err := Send(cli, baseUrl+"/resources?"+sinceParameter(since), nil, http.MethodGet, env, repo)
+	content, err := Send(cli, baseUrl+"/resources?"+sinceParameter(since), nil, http.MethodGet, env, repo, 30*time.Second)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch resource file names: %w", err)
 	}
@@ -96,7 +96,7 @@ func removeResourceFile(target string) error {
 
 func fetchAndSaveResourceFiles(cli inter.Cli, env Environment, repo, file string) error {
 	baseUrl := env.GetServiceUrl("confetti-cms/shared-resource")
-	content, err := Send(cli, baseUrl+"/resources/content?file="+url.QueryEscape(file), nil, http.MethodGet, env, repo)
+	content, err := Send(cli, baseUrl+"/resources/content?file="+url.QueryEscape(file), nil, http.MethodGet, env, repo, 30*time.Second)
 	if err != nil {
 		return fmt.Errorf("failed to fetch content of resource: %w", err)
 	}
