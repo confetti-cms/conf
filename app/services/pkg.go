@@ -66,8 +66,25 @@ func RestoreDirectory(pkg string) (bool, error) {
 
 func AddNewPackage(pkg string) error {
 	cmd := fmt.Sprintf("cd %s && git subtree add --prefix=\"pkg/%s\" git@github.com:%s.git main", config.Path.Root, pkg, pkg)
-	_, err := RunCommand(cmd)
+	output, err := RunCommand(cmd)
 	if err != nil {
+		// Check if the error is due to branch not existing
+		if strings.Contains(output, "doesn't exist") || strings.Contains(output, "not found") {
+			fmt.Printf("\n\033[31mThe branch 'main' does not exist in repository '%s'.\n\033[0m", pkg)
+			fmt.Println("Please create the repository and initial commit first. You can use the following commands to initialize it:")
+			fmt.Println()
+			fmt.Printf("\033[32mcd /path/to/%s\n\033[0m", pkg)
+			fmt.Printf("\033[32mecho \"# %s\" >> README.md\n\033[0m", pkg)
+			fmt.Printf("\033[32mgit init\n\033[0m")
+			fmt.Printf("\033[32mgit add README.md\n\033[0m")
+			fmt.Printf("\033[32mgit commit -m \"first commit\"\n\033[0m")
+			fmt.Printf("\033[32mgit branch -M main\n\033[0m")
+			fmt.Printf("\033[32mgit remote add origin git@github.com:%s.git\n\033[0m", pkg)
+			fmt.Printf("\033[32mgit push -u origin main\n\033[0m")
+			fmt.Printf("\033[32mcd -\n\033[0m")
+			fmt.Println()
+			return fmt.Errorf("branch 'main' does not exist in repository %s, please create it first", pkg)
+		}
 		return fmt.Errorf("error adding new package %s: %w", pkg, err)
 	}
 	return nil
@@ -76,8 +93,25 @@ func AddNewPackage(pkg string) error {
 func PullLatestChanges(pkg string) error {
 	cmd := fmt.Sprintf("cd %s && git subtree pull --message=\"Pull package %s\" --prefix=\"pkg/%s\" git@github.com:%s.git main", config.Path.Root, pkg, pkg, pkg)
 	// We can't use StreamCommand here (for now) because the command gives exit code 1 (if there are no changes).
-	_, err := RunCommand(cmd)
+	output, err := RunCommand(cmd)
 	if err != nil {
+		// Check if the error is due to repository not existing
+		if strings.Contains(output, "Repository not found") || strings.Contains(output, "does not exist") {
+			fmt.Printf("\n\033[31mThe repository '%s' does not exist.\n\033[0m", pkg)
+			fmt.Println("Please create the repository first. You can use the following commands to initialize it:")
+			fmt.Println()
+			fmt.Printf("\033[32mcd /path/to/%s\n\033[0m", pkg)
+			fmt.Printf("\033[32mecho \"# %s\" >> README.md\n\033[0m", pkg)
+			fmt.Printf("\033[32mgit init\n\033[0m")
+			fmt.Printf("\033[32mgit add README.md\n\033[0m")
+			fmt.Printf("\033[32mgit commit -m \"first commit\"\n\033[0m")
+			fmt.Printf("\033[32mgit branch -M main\n\033[0m")
+			fmt.Printf("\033[32mgit remote add origin git@github.com:%s.git\n\033[0m", pkg)
+			fmt.Printf("\033[32mgit push -u origin main\n\033[0m")
+			fmt.Printf("\033[32mcd -\n\033[0m")
+			fmt.Println()
+			return fmt.Errorf("repository %s does not exist, please create it first", pkg)
+		}
 		return err
 	}
 	return nil
