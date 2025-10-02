@@ -28,7 +28,7 @@ func GetPatchSinceCommitE(commit, file string, isNew bool) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if strings.Trim(out, "\n") != "" || !isNew {
+	if strings.Trim(out, "\n") != "" {
 		return out, err
 	}
 

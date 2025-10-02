@@ -137,13 +137,16 @@ func (w Scanner) startListening(cli inter.Cli, watcher *fsnotify.Watcher, env se
 				services.ResourceMayHaveChanged()
 				continue
 			}
-			// Not removing
 			fileInfo, err := os.Stat(event.Name)
 			if err != nil {
-				println("Err: when check file for dir: " + err.Error())
-				println(event.Name)
+				// If the file is added and then removed, we can get 'no such file or directory' error.
+				if config.App.VeryVerbose && !os.IsNotExist(err) {
+					println("Err: when check file for dir: " + err.Error())
+					println(event.Name)
+				}
 				continue
 			}
+			// Not removing
 			if fileInfo.IsDir() {
 				if services.GitIgnored(event.Name) {
 					continue
