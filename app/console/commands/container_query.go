@@ -99,7 +99,7 @@ func printEasterEgg() {
 	fmt.Printf("\n\n\n\n\n\n")
 	printEmoji(0, " ")
 	fmt.Printf("\033[%dD", eggPosition) // Cursor back to the left
-	time.Sleep(4000 * time.Millisecond)
+	time.Sleep(500 * time.Millisecond)
 	printEmoji(0, "✋")
 	printEmoji(0, "👋")
 	printEmoji(0, "✋")
