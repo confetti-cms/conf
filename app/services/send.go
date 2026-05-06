@@ -76,11 +76,11 @@ func Send(cli inter.Cli, requestUrl string, body any, method string, env Environ
 	}
 	if res.StatusCode == http.StatusBadGateway {
 		// Override previous message with spaces
-		fmt.Printf("\rDevelopment services are almost available. We'll be done in 3 seconds")
+		fmt.Printf("\rDevelopment services are almost available. We'll be done in a few seconds")
 		if config.App.VeryVerbose {
 			fmt.Println("Body:", string(responseBody))
 		}
-		time.Sleep(1 * time.Second)
+		time.Sleep(5 * time.Second)
 		retry++
 		return Send(cli, requestUrl, body, method, env, repo, 30*time.Second)
 	}

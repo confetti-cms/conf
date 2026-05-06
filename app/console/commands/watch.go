@@ -126,6 +126,8 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 	if config.App.VeryVerbose {
 		fmt.Println("->> Parsing components")
 	}
+	c.Line("Setup development environment...")
+	c.Line("")
 	if t.Reset {
 		err = services.ParseAllComponents(c, env, repo)
 		if err != nil {
@@ -156,8 +158,10 @@ func (t Watch) Handle(c inter.Cli) inter.ExitCode {
 			return inter.Failure
 		}
 	}
-
+	services.ClearLines()
+	services.ClearLines()
 	c.Line("")
+
 	for _, host := range env.GetExplicitHosts() {
 		method := "https://"
 		if env.Local {
